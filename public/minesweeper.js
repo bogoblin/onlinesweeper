@@ -6,6 +6,8 @@ var socket = io();
 var tiles = [];
 var dimensions;
 
+var bbox = {};
+
 class Position {
     constructor(x, y) {
         this.x = Math.round(x);
@@ -24,20 +26,41 @@ class Tile {
 }
 
 var center;
+var username;
 
-socket.on('loginsuccess', function(){
+socket.on('loginsuccess', function(usn){
     document.getElementById('loginform').hidden = true;
     document.getElementById('canvas').hidden = false;
+    username = usn;
+    console.log(usn);
 });
 
 socket.on('loginfail', function(){
     document.getElementById('loginerror').innerHTML = "A user with this name already exists and the password doesn't match.";
 });
 
+socket.on('stats', function(stats) {
+    stats = JSON.parse(stats);
+    console.log(username+' '+stats.name);
+    if (stats.name == username) {
+        console.log("hi");
+        var statbox = document.getElementById('mystats');
+        statbox.hidden = false;
+        var tilestats = statbox.getElementsByClassName('tilestat');
+        for (var i=0; i<=8; i++) {
+            tilestats[i].innerHTML = stats.tilesfound[i];
+        }
+    }
+})
+
 socket.on('dimensions', function(dim){
     preload();
     dimensions = JSON.parse(dim);
     center = new Position(dimensions.width/2, dimensions.height/2);
+    bbox.left = center.x;
+    bbox.right = center.x;
+    bbox.up = center.y;
+    bbox.down = center.y;
     console.log(dimensions);
     for (var x=0; x<dimensions.width; x++) {
         tiles.push([]);
@@ -52,12 +75,32 @@ socket.on('tile', function(tile){
     var x = tile.position.x;
     var y = tile.position.y;
     tiles[x][y] = tile;
-    bbox.left = min(bbox.left, x);
-    bbox.right = max(bbox.right, x);
-    bbox.up = min(bbox.up, y);
-    bbox.down = min(bbox.down, y);
+    bbox.left = Math.min(bbox.left, x);
+    bbox.right = Math.max(bbox.right, x);
+    bbox.up = Math.min(bbox.up, y);
+    bbox.down = Math.max(bbox.down, y);
     draw();
 });
+
+var dead = false;
+var respawntime = 0;
+
+socket.on('dead', function(resptime){
+    dead = true;
+    respawntime = resptime;
+    setTimeout(updateRespawnTimer, 1000);
+});
+
+function updateRespawnTimer() {
+    respawntime--;
+    draw();
+    if (respawntime == 0) {
+        dead = false;
+        draw();
+        return;
+    }
+    setTimeout(updateRespawnTimer, 1000);
+}
 
 function imgsloaded() {
     draw();
@@ -78,8 +121,7 @@ function login() {
         document.getElementById('loginerror').innerHTML = 'Your password must contain at least 4 characters.';
         return;
     }
-    socket.emit('user', user);
-    socket.emit('password', password);
+    socket.emit('login', {usn:user, pass:password});
 }
 
 // load the images
@@ -140,23 +182,24 @@ function drawTile(x, y, pos, scale) {
 }
 
 var leftmost, rightmost, upmost, downmost;
-var bbox = {
-    left: center.x,
-    right: center.x,
-    up: center.y,
-    down: center.y
-};
+
+
+var width = 800;
+var height = 800;
+
+function updateDrawBox() {
+    leftmost  = Math.round(center.x - ((width /2)/(tilesize*tilescale) ));
+    rightmost = Math.round(center.x + ((width /2)/(tilesize*tilescale) ));
+    upmost    = Math.round(center.y - ((height/2)/(tilesize*tilescale) ));
+    downmost  = Math.round(center.y + ((height/2)/(tilesize*tilescale) ));
+}
 
 function draw() {
-    var width = 800;//window.innerWidth;
-    var height = 800;//window.innerHeight;
 
-    canvas.clearRect(0, 0, width, height);
+    canvas.fillStyle = "black";
+    canvas.fillRect(0, 0, width, height);
     
-    leftmost  = Math.round(center.x - ((width /2)/(tilesize*tilescale) + 1));
-    rightmost = Math.round(center.x + ((width /2)/(tilesize*tilescale) + 1));
-    upmost    = Math.round(center.y - ((height/2)/(tilesize*tilescale) + 1));
-    downmost  = Math.round(center.y + ((height/2)/(tilesize*tilescale) + 1));
+    updateDrawBox();
 
     var pos = {}
     pos.x = 0;
@@ -169,6 +212,14 @@ function draw() {
             pos.y += 16;
         }
         pos.x += 16;
+    }
+
+    if (dead) {
+        canvas.fillStyle = "#00000088";
+        canvas.fillRect(0, 0, width, height);
+        canvas.font = "100px courier";
+        canvas.textAlign = "center";
+        canvas.fillText(respawntime, width/2, height/2);
     }
     
 }
@@ -241,12 +292,16 @@ function stopDrag(pos) {
     c.removeEventListener("mousemove", doDrag);
 }
 
+var margin = 4;
+
 function doDrag(e) {
     var pos = getRealMousePos(e);
     var diffx = pos.x - dragStart.x;
     var diffy = pos.y - dragStart.y;
     center.x = dragStartCenter.x - diffx/(tilesize*tilescale);
     center.y = dragStartCenter.y - diffy/(tilesize*tilescale);
+    var w = width/(tilescale*tilesize);
+    var h = height/(tilescale*tilesize);
     draw();
 }
 

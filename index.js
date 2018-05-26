@@ -26,6 +26,63 @@ class Position {
     }
 }
 
+class User {
+    constructor(name, socket) {
+        this.name = name;
+        this.socket = socket;
+        this.stats = {
+            name: this.name,
+            tilesfound: [0, 0, 0, 0, 0, 0, 0, 0, 0],
+            total: 0,
+            deaths: 0,
+            currentstreak: 0,
+            beststreak: 0
+        };
+        this.dead = false;
+        this.respawntime = 6000;
+    }
+
+    setpass(password) {
+        this.hash = sha256(password);
+    }
+
+    checkpass(password) {
+        return this.hash == sha256(password);
+    }
+
+    died() {
+        this.stats.deaths++;
+        this.dead = true;
+        if (this.stats.currentstreak > this.stats.beststreak) {
+            this.stats.beststreak = this.stats.currentstreak;
+        }
+        this.stats.currentstreak = 0;
+        setTimeout(this.respawn, this.respawntime, this);
+        if (this.socket != null) {
+            this.socket.emit('dead', this.respawntime/1000);
+        }
+    }
+
+    respawn(user) {
+        user.dead = false;
+        user.socket.dead = false;
+        if (user.socket != null) {
+            user.socket.emit('respawn');
+        }
+    }
+    
+    addstat(adj) {
+        this.stats.tilesfound[adj]++;
+        this.stats.total++;
+        this.stats.currentstreak++;
+    }
+
+    isBetterThan(user) {
+        if (this.stats.beststreak > user.stats.beststreak) return true;
+        return false;
+    }
+}
+
 // generate the board
 var tiles = [];
 for (var x=0; x<dimensions.height; x++) {
@@ -67,7 +124,7 @@ var users = {};
 
 io.on('connection', function(socket){
     console.log('a user connected');
-    socket.emit('dimensions', JSON.stringify(dimensions));
+    
     socket.on('disconnect', function(){
         console.log('user disconnected');
     });
@@ -90,35 +147,43 @@ io.on('connection', function(socket){
                 }
             }
         }
+        setInterval(function(){
+            io.emit('stats', JSON.stringify(socket.user.stats));
+        }, 10000);
     });
 
-    socket.on('user', function(user){
+    // TODO rewrite the password system so that the password can come before the username
+    socket.on('login', function(login){
+        var user = login.usn;
+        var password = login.pass;
         if (userRe.test(user) == false) {
             return;
         }
-        socket.user = user;
+        socket.username = user;
         if (users[user] == null) {
             socket.newuser = true;
         } else {
             socket.newuser = false;
+            socket.user = users[user];
         }
-    });
-
-    socket.on('password', function(password){
         if (password.length < 4) {
             return;
         }
-        var hash = sha256(password);
         if (socket.newuser) {
-            users[socket.user] = {};
-            users[socket.user].hash = hash;
-            socket.emit('loginsuccess');
+            users[socket.username] = new User(user, socket);
+            socket.user = users[socket.username];
+            socket.user.setpass(password);
+            socket.emit('loginsuccess', socket.username);
+            socket.emit('dimensions', JSON.stringify(dimensions));
             socket.loggedin = true;
         }
         else {
-            if (users[socket.user].hash == hash) {
+            if (users[socket.username].checkpass(password)) {
                 socket.emit('loginsuccess');
+                socket.emit('dimensions', JSON.stringify(dimensions));
                 socket.loggedin = true;
+                socket.user = users[socket.username];
+                socket.user.socket = socket;
             }
             else {
                 socket.emit('loginfail');
@@ -141,7 +206,10 @@ function sendTile(pos) {
 }
 
 function tileClicked(socket, pos) {
-    if (!socket.loggedin) return;
+    if (!socket.loggedin || socket.user.dead) {
+        //console.log(socket.user.dead);
+        return;
+    }
     if (typeof pos == "string") pos = JSON.parse(pos);
     var x = pos.x;
     var y = pos.y;
@@ -153,9 +221,14 @@ function tileClicked(socket, pos) {
     if (!tile.revealed) {
         tile.revealed = true;
         tile.flagged = false;
+        if (tile.mine) {
+            socket.user.died();
+        }
+        else {
+            socket.user.addstat(tile.adjacent);
+        }
         sendTile(pos);
-        if (tile.adjacent == 0) {
-            console.log("brow");
+        if (tile.adjacent == 0 && !tile.mine) {
             for (var i=-1; i<=1; i++) {
                 for (var j=-1; j<=1; j++) {
                     tileClicked(socket, new Position(x+i, y+j));
@@ -166,7 +239,7 @@ function tileClicked(socket, pos) {
 }
 
 function tileFlagged(socket, pos) {
-    if (!socket.loggedin) return;
+    if (!socket.loggedin || socket.user.dead) return;
     if (typeof pos == "string") pos = JSON.parse(pos);
     var x = pos.x;
     var y = pos.y;
