@@ -140,7 +140,9 @@ function clickTile(pos) {
     if (x < 0 || x >= dimensions.width || y < 0 || y >= dimensions.height) {
         return;
     }
-    socket.emit('tc', JSON.stringify(pos));
+    if (!tiles[x][y].revealed) {
+        socket.emit('tc', JSON.stringify(pos));
+    }
 }
 
 function flagTile(pos) {
@@ -149,7 +151,9 @@ function flagTile(pos) {
     if (x < 0 || x >= dimensions.width || y < 0 || y >= dimensions.height) {
         return;
     }
-    socket.emit('fl', JSON.stringify(pos));
+    if (!tiles[x][y].revealed) {
+        socket.emit('fl', JSON.stringify(pos));
+    }
 }
 
 function chordTile(pos) {
@@ -181,12 +185,44 @@ function chordTile(pos) {
     }
 }
 
-function getMousePos(e) {
+var drag;
+var dragStart;
+var dragStartCenter = new Position(0, 0);
+
+function startDrag(pos) {
+    drag = true;
+    dragStart = pos;
+    dragStartCenter.x = center.x;
+    dragStartCenter.y = center.y;
+    c.addEventListener("mousemove", doDrag);
+}
+
+function stopDrag(pos) {
+    drag = false;
+    c.removeEventListener("mousemove", doDrag);
+}
+
+function doDrag(e) {
+    var pos = getRealMousePos(e);
+    var diffx = pos.x - dragStart.x;
+    var diffy = pos.y - dragStart.y;
+    center.x = dragStartCenter.x - diffx/(tilesize*tilescale);
+    center.y = dragStartCenter.y - diffy/(tilesize*tilescale);
+    console.log(diffx/(tilesize*tilescale))
+    draw();
+}
+
+function getRealMousePos(e) {
     var rect = c.getBoundingClientRect();
     var mouseX = e.clientX - rect.left;
     var mouseY = e.clientY - rect.top;
-    var x = Math.floor(mouseX/(tilesize*tilescale)) + leftmost;
-    var y = Math.floor(mouseY/(tilesize*tilescale)) + upmost;
+    return new Position(mouseX, mouseY);
+}
+
+function getMousePos(e) {
+    var mouse = getRealMousePos(e);
+    var x = Math.floor(mouse.x/(tilesize*tilescale)) + leftmost;
+    var y = Math.floor(mouse.y/(tilesize*tilescale)) + upmost;
     var pos = new Position(x, y);
     return pos;
 }
@@ -198,8 +234,9 @@ function canvasClicked(e) {
     if (e.button == 2) {
         flagTile(pos);
     }
-    else if (e.button == 0 && mouse[2]) {
-        chordTile(pos);
+    else if (!drag && e.button == 1) {
+        var pos = getRealMousePos(e);
+        startDrag(pos);
     }
     mouse[e.button] = true;
 }
@@ -207,8 +244,14 @@ c.addEventListener("mousedown", canvasClicked);
 
 function canvasReleased(e) {
     var pos = getMousePos(e);
-    if (mouse[0] && e.button == 0) {
+    if (drag && e.button == 1) {
+        stopDrag();
+    }
+    else if (mouse[0] && e.button == 0) {
         clickTile(pos);
+    }
+    if (e.button == 0 && mouse[2]) {
+        chordTile(pos);
     }
     mouse[e.button] = false;
 }
