@@ -2,6 +2,7 @@ var express = require('express');
 var app = require('express')();
 var http = require('http').Server(app);
 var io = require('socket.io')(http);
+var sha256 = require('js-sha256');
 
 var dimensions = {};
 dimensions.width = 64;
@@ -60,6 +61,10 @@ app.get('/', function(req, res){
 
 app.use(express.static('public'));
 
+var userRe = /^\w*$/;
+
+var users = {};
+
 io.on('connection', function(socket){
     console.log('a user connected');
     socket.emit('dimensions', JSON.stringify(dimensions));
@@ -67,9 +72,15 @@ io.on('connection', function(socket){
         console.log('user disconnected');
     });
 
-    socket.on('tc', tileClicked);
+    socket.loggedin = false;
 
-    socket.on('fl', tileFlagged);
+    socket.on('tc', function(pos){
+        tileClicked(socket, pos);
+    });
+
+    socket.on('fl', function(pos){
+        tileFlagged(socket, pos);
+    });
 
     socket.on('ready', function(){
         for (var x=0; x<dimensions.width; x++) {
@@ -79,7 +90,41 @@ io.on('connection', function(socket){
                 }
             }
         }
-    })
+    });
+
+    socket.on('user', function(user){
+        if (userRe.test(user) == false) {
+            return;
+        }
+        socket.user = user;
+        if (users[user] == null) {
+            socket.newuser = true;
+        } else {
+            socket.newuser = false;
+        }
+    });
+
+    socket.on('password', function(password){
+        if (password.length < 4) {
+            return;
+        }
+        var hash = sha256(password);
+        if (socket.newuser) {
+            users[socket.user] = {};
+            users[socket.user].hash = hash;
+            socket.emit('loginsuccess');
+            socket.loggedin = true;
+        }
+        else {
+            if (users[socket.user].hash == hash) {
+                socket.emit('loginsuccess');
+                socket.loggedin = true;
+            }
+            else {
+                socket.emit('loginfail');
+            }
+        }
+    });
 });
 
 http.listen(3000, function(){
@@ -95,7 +140,8 @@ function sendTile(pos) {
     io.emit('tile', t);
 }
 
-function tileClicked(pos) {
+function tileClicked(socket, pos) {
+    if (!socket.loggedin) return;
     if (typeof pos == "string") pos = JSON.parse(pos);
     var x = pos.x;
     var y = pos.y;
@@ -112,14 +158,15 @@ function tileClicked(pos) {
             console.log("brow");
             for (var i=-1; i<=1; i++) {
                 for (var j=-1; j<=1; j++) {
-                    tileClicked(new Position(x+i, y+j));
+                    tileClicked(socket, new Position(x+i, y+j));
                 }
             }
         }
     }
 }
 
-function tileFlagged(pos) {
+function tileFlagged(socket, pos) {
+    if (!socket.loggedin) return;
     if (typeof pos == "string") pos = JSON.parse(pos);
     var x = pos.x;
     var y = pos.y;

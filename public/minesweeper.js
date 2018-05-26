@@ -25,6 +25,15 @@ class Tile {
 
 var center;
 
+socket.on('loginsuccess', function(){
+    document.getElementById('loginform').hidden = true;
+    document.getElementById('canvas').hidden = false;
+});
+
+socket.on('loginfail', function(){
+    document.getElementById('loginerror').innerHTML = "A user with this name already exists and the password doesn't match.";
+});
+
 socket.on('dimensions', function(dim){
     preload();
     dimensions = JSON.parse(dim);
@@ -43,11 +52,34 @@ socket.on('tile', function(tile){
     var x = tile.position.x;
     var y = tile.position.y;
     tiles[x][y] = tile;
+    bbox.left = min(bbox.left, x);
+    bbox.right = max(bbox.right, x);
+    bbox.up = min(bbox.up, y);
+    bbox.down = min(bbox.down, y);
     draw();
 });
 
 function imgsloaded() {
     draw();
+}
+
+var userRe = /^\w*$/;
+var loggedin = false;
+
+function login() {
+    var form = document.getElementById('login');
+    var user = form.elements[0].value;
+    if (userRe.test(user) == false) {
+        document.getElementById('loginerror').innerHTML = 'Usernames can only contain alphanumeric characters and underscores.';
+        return;
+    }
+    var password = form.elements[1].value;
+    if (password.length < 4) {
+        document.getElementById('loginerror').innerHTML = 'Your password must contain at least 4 characters.';
+        return;
+    }
+    socket.emit('user', user);
+    socket.emit('password', password);
 }
 
 // load the images
@@ -108,16 +140,23 @@ function drawTile(x, y, pos, scale) {
 }
 
 var leftmost, rightmost, upmost, downmost;
+var bbox = {
+    left: center.x,
+    right: center.x,
+    up: center.y,
+    down: center.y
+};
 
 function draw() {
     var width = 800;//window.innerWidth;
     var height = 800;//window.innerHeight;
+
+    canvas.clearRect(0, 0, width, height);
     
     leftmost  = Math.round(center.x - ((width /2)/(tilesize*tilescale) + 1));
     rightmost = Math.round(center.x + ((width /2)/(tilesize*tilescale) + 1));
     upmost    = Math.round(center.y - ((height/2)/(tilesize*tilescale) + 1));
     downmost  = Math.round(center.y + ((height/2)/(tilesize*tilescale) + 1));
-    console.log(''+leftmost+' '+rightmost+' '+upmost+' '+downmost);
 
     var pos = {}
     pos.x = 0;
@@ -208,7 +247,6 @@ function doDrag(e) {
     var diffy = pos.y - dragStart.y;
     center.x = dragStartCenter.x - diffx/(tilesize*tilescale);
     center.y = dragStartCenter.y - diffy/(tilesize*tilescale);
-    console.log(diffx/(tilesize*tilescale))
     draw();
 }
 
