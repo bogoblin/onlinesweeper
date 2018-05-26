@@ -1,0 +1,8 @@
+{
+  "name": "minesweeper",
+  "version": "0.0.1",
+  "description": "online minesweeper app",
+  "dependencies": {
+    "express": "^4.15.2"
+  }
+}
