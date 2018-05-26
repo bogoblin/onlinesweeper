@@ -152,6 +152,35 @@ function flagTile(pos) {
     socket.emit('fl', JSON.stringify(pos));
 }
 
+function chordTile(pos) {
+    var x = pos.x;
+    var y = pos.y;
+    if (x < 0 || x >= dimensions.width || y < 0 || y >= dimensions.height) {
+        return;
+    }
+    var t = tiles[x][y];
+    if (t.adjacent == 0) {
+        return;
+    }
+    var adjacentMinesAndFlags = 0;
+    for (var i=-1; i<=1; i++) {
+        for (var j=-1; j<=1; j++) {
+            if (tiles[x+i][y+j].flagged || tiles[x+i][y+j].mine) {
+                adjacentMinesAndFlags++;
+            }
+        }
+    }
+    if (adjacentMinesAndFlags == t.adjacent) {
+        for (var i=-1; i<=1; i++) {
+            for (var j=-1; j<=1; j++) {
+                if (!tiles[x+i][y+j].flagged && !tiles[x+i][y+j].revealed) {
+                    clickTile(new Position(x+i, y+j));
+                }
+            }
+        }
+    }
+}
+
 function getMousePos(e) {
     var rect = c.getBoundingClientRect();
     var mouseX = e.clientX - rect.left;
@@ -165,14 +194,24 @@ function getMousePos(e) {
 var mouse = [false, false, false];
 
 function canvasClicked(e) {
-    var pos = getMousePos(e)
-    clickTile(pos);
-}
-c.addEventListener("click", canvasClicked);
-
-function canvasRightClicked(e) {
     var pos = getMousePos(e);
-    flagTile(pos);
-    return false;
+    if (e.button == 2) {
+        flagTile(pos);
+    }
+    else if (e.button == 0 && mouse[2]) {
+        chordTile(pos);
+    }
+    mouse[e.button] = true;
 }
-c.addEventListener("contextmenu", canvasRightClicked);
+c.addEventListener("mousedown", canvasClicked);
+
+function canvasReleased(e) {
+    var pos = getMousePos(e);
+    if (mouse[0] && e.button == 0) {
+        clickTile(pos);
+    }
+    mouse[e.button] = false;
+}
+c.addEventListener("mouseup", canvasReleased);
+
+c.addEventListener("contextmenu", function(e){return false;});

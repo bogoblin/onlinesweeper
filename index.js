@@ -106,6 +106,7 @@ function tileClicked(pos) {
     var tile = tiles[x][y];
     if (!tile.revealed) {
         tile.revealed = true;
+        tile.flagged = false;
         sendTile(pos);
         if (tile.adjacent == 0) {
             console.log("brow");
@@ -127,7 +128,7 @@ function tileFlagged(pos) {
         return;
     }
     var tile = tiles[x][y];
-    if (tile.flagged) {
+    if (tile.flagged || tile.revealed) {
         tile.flagged = false;
     }
     else {
