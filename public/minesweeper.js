@@ -6,8 +6,6 @@ var socket = io();
 var tiles = [];
 var dimensions;
 
-var bbox = {};
-
 class Position {
     constructor(x, y) {
         this.x = Math.round(x);
@@ -25,42 +23,27 @@ class Tile {
     }
 }
 
-var center;
 var username;
 
 socket.on('loginsuccess', function(usn){
     document.getElementById('loginform').hidden = true;
     document.getElementById('canvas').hidden = false;
     username = usn;
-    console.log(usn);
+    console.log('logged in as:'+ usn);
 });
 
 socket.on('loginfail', function(){
     document.getElementById('loginerror').innerHTML = "A user with this name already exists and the password doesn't match.";
 });
 
-socket.on('stats', function(stats) {
-    stats = JSON.parse(stats);
-    console.log(username+' '+stats.name);
-    if (stats.name == username) {
-        console.log("hi");
-        var statbox = document.getElementById('mystats');
-        statbox.hidden = false;
-        var tilestats = statbox.getElementsByClassName('tilestat');
-        for (var i=0; i<=8; i++) {
-            tilestats[i].innerHTML = stats.tilesfound[i];
-        }
-    }
+var mystat;
+socket.on('mystats', function(stats) {
+    mystat = JSON.parse(stats);
 })
 
 socket.on('dimensions', function(dim){
     preload();
     dimensions = JSON.parse(dim);
-    center = new Position(dimensions.width/2, dimensions.height/2);
-    bbox.left = center.x;
-    bbox.right = center.x;
-    bbox.up = center.y;
-    bbox.down = center.y;
     console.log(dimensions);
     for (var x=0; x<dimensions.width; x++) {
         tiles.push([]);
@@ -71,14 +54,42 @@ socket.on('dimensions', function(dim){
     socket.emit('ready');
 });
 
+var bbox;
+var topLeft = new Position(-1, -1);
+var initialLoadDone = false;
 socket.on('tile', function(tile){
+    tile = JSON.parse(tile);
     var x = tile.position.x;
     var y = tile.position.y;
     tiles[x][y] = tile;
+    if (bbox == null) {
+        console.log("hey"+x+' '+y);
+        bbox = {
+            left: x,
+            right: x,
+            up: y,
+            down: y
+        };
+        topLeft = new Position(x, y);
+    }
     bbox.left = Math.min(bbox.left, x);
     bbox.right = Math.max(bbox.right, x);
     bbox.up = Math.min(bbox.up, y);
     bbox.down = Math.max(bbox.down, y);
+    if (initialLoadDone) draw();
+});
+
+socket.on('doneload', function(){
+    initialLoadDone = true;
+    if (bbox==null) {
+        topLeft.x = dimensions.width/2;
+        topLeft.y = dimensions.height/2;
+        bbox = {};
+        bbox.left = topLeft.x;
+        bbox.right = topLeft.x;
+        bbox.up = topLeft.y;
+        bbox.down = topLeft.y;
+    }
     draw();
 });
 
@@ -103,6 +114,7 @@ function updateRespawnTimer() {
 }
 
 function imgsloaded() {
+    resizeWindow();
     draw();
 }
 
@@ -186,16 +198,55 @@ var leftmost, rightmost, upmost, downmost;
 
 var width = 800;
 var height = 800;
+var margin = 4;
 
 function updateDrawBox() {
-    leftmost  = Math.round(center.x - ((width /2)/(tilesize*tilescale) ));
-    rightmost = Math.round(center.x + ((width /2)/(tilesize*tilescale) ));
-    upmost    = Math.round(center.y - ((height/2)/(tilesize*tilescale) ));
-    downmost  = Math.round(center.y + ((height/2)/(tilesize*tilescale) ));
+    var w = width/(tilesize*tilescale);
+    var h = height/(tilesize*tilescale);
+    leftmost  = Math.round(topLeft.x);
+    rightmost = Math.round(topLeft.x + width/(tilesize*tilescale));
+    upmost    = Math.round(topLeft.y);
+    downmost  = Math.round(topLeft.y + height/(tilesize*tilescale));
+
+    // if (rightmost > bbox.right + margin) {
+    //     topLeft.x = bbox.right + margin - w;
+    //     leftmost  = Math.round(topLeft.x);
+    //     rightmost = Math.round(topLeft.x + width/(tilesize*tilescale));
+    // } if (downmost > bbox.down + margin) {
+    //     topLeft.y = bbox.down + margin - h;
+    //     upmost    = Math.round(topLeft.y);
+    //     downmost  = Math.round(topLeft.y + height/(tilesize*tilescale));
+    // }
+    // if (leftmost < bbox.left - margin) {
+    //     topLeft.x = bbox.left - margin;
+    //     leftmost  = Math.round(topLeft.x);
+    //     rightmost = Math.round(topLeft.x + width/(tilesize*tilescale));
+    // } if (upmost < bbox.up - margin) {
+    //     topLeft.y = bbox.up - margin;
+    //     upmost    = Math.round(topLeft.y);
+    //     downmost  = Math.round(topLeft.y + height/(tilesize*tilescale));
+    // }
+    // if (bbox.right - bbox.left < w) {
+    //     topLeft.x = (bbox.right+bbox.left)/2;
+    // }
+    // if (bbox.down - bbox.up < h) {
+    //     topLeft.y = (bbox.down+bbox.left)/2;
+    // }
+}
+
+window.addEventListener("resize", resizeWindow);
+document.addEventListener('webkitfullscreenchange', resizeWindow);
+document.addEventListener('mozfullscreenchange', resizeWindow);
+document.addEventListener('fullscreenchange', resizeWindow);
+
+function resizeWindow() {
+    c.width = window.innerWidth;
+    c.height = window.innerHeight-5;
+    width = c.width;
+    height = c.height;
 }
 
 function draw() {
-
     canvas.fillStyle = "black";
     canvas.fillRect(0, 0, width, height);
     
@@ -213,6 +264,83 @@ function draw() {
         }
         pos.x += 16;
     }
+
+    var statsw = 96; var statsh = 256;
+    canvas.fillStyle = "#00000088";
+    canvas.fillRect(0+8+4, 0+8+4, statsw, statsh);
+    canvas.fillStyle = "white";
+    canvas.fillRect(0+8, 0+8, statsw, statsh);
+    canvas.font = "16px courier";
+    canvas.textAlign = "left";
+
+
+    var xbasei = 16;
+    var ybasei = 16;
+    var xbaset = 36;
+    var ybaset = 30;
+    var i = 1;
+    canvas.fillStyle = "#0000ff";
+    canvas.drawImage(images.adj[i], xbasei, ybasei);
+    canvas.fillText(mystat.tilesfound[i], xbaset, ybaset);
+
+    ybasei+=16;
+    ybaset+=16;
+    i++;
+    canvas.fillStyle = "#008000";
+    canvas.drawImage(images.adj[i], xbasei, ybasei);
+    canvas.fillText(mystat.tilesfound[i], xbaset, ybaset);
+
+    ybasei+=16;
+    ybaset+=16;
+    i++;
+    canvas.fillStyle = "#800000";
+    canvas.drawImage(images.adj[i], xbasei, ybasei);
+    canvas.fillText(mystat.tilesfound[i], xbaset, ybaset);
+
+    ybasei+=16;
+    ybaset+=16;
+    i++;
+    canvas.fillStyle = "#000080";
+    canvas.drawImage(images.adj[i], xbasei, ybasei);
+    canvas.fillText(mystat.tilesfound[i], xbaset, ybaset);
+
+    ybasei+=16;
+    ybaset+=16;
+    i++;
+    canvas.fillStyle = "#800000";
+    canvas.drawImage(images.adj[i], xbasei, ybasei);
+    canvas.fillText(mystat.tilesfound[i], xbaset, ybaset);
+
+    ybasei+=16;
+    ybaset+=16;
+    i++;
+    canvas.fillStyle = "#008080";
+    canvas.drawImage(images.adj[i], xbasei, ybasei);
+    canvas.fillText(mystat.tilesfound[i], xbaset, ybaset);
+
+    ybasei+=16;
+    ybaset+=16;
+    i++;
+    canvas.fillStyle = "#000000";
+    canvas.drawImage(images.adj[i], xbasei, ybasei);
+    canvas.fillText(mystat.tilesfound[i], xbaset, ybaset);
+
+    ybasei+=16;
+    ybaset+=16;
+    i++;
+    canvas.fillStyle = "#808080";
+    canvas.drawImage(images.adj[i], xbasei, ybasei);
+    canvas.fillText(mystat.tilesfound[i], xbaset, ybaset);
+    // for (var i=1; i<=4; i++) {
+    //     canvas.drawImage(images.adj[i], 16, ypos);
+    //     canvas.fillText
+    //     ypos += 16;
+    // }
+    // var ypos = 16;
+    // for (var i=5; i<=8; i++) {
+    //     canvas.drawImage(images.adj[i], 96, ypos);
+    //     ypos += 16;
+    // }
 
     if (dead) {
         canvas.fillStyle = "#00000088";
@@ -277,13 +405,13 @@ function chordTile(pos) {
 
 var drag;
 var dragStart;
-var dragStartCenter = new Position(0, 0);
+var dragStartTL = new Position(0, 0);
 
 function startDrag(pos) {
     drag = true;
     dragStart = pos;
-    dragStartCenter.x = center.x;
-    dragStartCenter.y = center.y;
+    dragStartTL.x = topLeft.x;
+    dragStartTL.y = topLeft.y;
     c.addEventListener("mousemove", doDrag);
 }
 
@@ -298,8 +426,8 @@ function doDrag(e) {
     var pos = getRealMousePos(e);
     var diffx = pos.x - dragStart.x;
     var diffy = pos.y - dragStart.y;
-    center.x = dragStartCenter.x - diffx/(tilesize*tilescale);
-    center.y = dragStartCenter.y - diffy/(tilesize*tilescale);
+    topLeft.x = dragStartTL.x - diffx/(tilesize*tilescale);
+    topLeft.y = dragStartTL.y - diffy/(tilesize*tilescale);
     var w = width/(tilescale*tilesize);
     var h = height/(tilescale*tilesize);
     draw();

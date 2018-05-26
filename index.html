@@ -4,7 +4,7 @@
         <title>Online Minesweeper</title>
     </head>
     
-    <body>
+    <body style="margin: 0px; border: 0px; padding: 0px">
         <div id="loginform">
             <form id='login' action='#'>
                 username <input type="text" id="user"><br>
@@ -13,9 +13,9 @@
             </form>
             <p id='loginerror'></p>
         </div>
-        <canvas id="canvas" width="800" height="800" oncontextmenu="return false" hidden="true"></canvas>
+        <canvas id="canvas" width="800" height="800" oncontextmenu="return false" hidden="true" style="margin: 0px"></canvas>
         <h1 hidden="true">Logged in as</h1>
-        <div class="mystats" hidden="true">
+        <div id="mystats" hidden="true">
             <h2 id="name"></h2>
             <img src="tiles/0.png"><span class="tilestat">5</span>
             <img src="tiles/1.png"><span class="tilestat">5</span>

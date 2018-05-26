@@ -5,8 +5,8 @@ var io = require('socket.io')(http);
 var sha256 = require('js-sha256');
 
 var dimensions = {};
-dimensions.width = 64;
-dimensions.height = 64;
+dimensions.width = 256;
+dimensions.height = 256;
 var minedensity = 0.15;
 
 class Tile {
@@ -39,7 +39,7 @@ class User {
             beststreak: 0
         };
         this.dead = false;
-        this.respawntime = 6000;
+        this.respawntime = 1000;
     }
 
     setpass(password) {
@@ -140,6 +140,7 @@ io.on('connection', function(socket){
     });
 
     socket.on('ready', function(){
+        console.log("sending tiles");
         for (var x=0; x<dimensions.width; x++) {
             for (var y=0; y<dimensions.height; y++) {
                 if (tiles[x][y].revealed || tiles[x][y].flagged) {
@@ -147,8 +148,9 @@ io.on('connection', function(socket){
                 }
             }
         }
+        io.emit('doneload');
         setInterval(function(){
-            io.emit('stats', JSON.stringify(socket.user.stats));
+            io.emit('mystats', JSON.stringify(socket.user.stats));
         }, 10000);
     });
 
@@ -179,7 +181,7 @@ io.on('connection', function(socket){
         }
         else {
             if (users[socket.username].checkpass(password)) {
-                socket.emit('loginsuccess');
+                socket.emit('loginsuccess', socket.username);
                 socket.emit('dimensions', JSON.stringify(dimensions));
                 socket.loggedin = true;
                 socket.user = users[socket.username];
@@ -202,7 +204,7 @@ function sendTile(pos) {
     if (tiles[pos.x][pos.y].revealed) {
         t = tiles[pos.x][pos.y];
     }
-    io.emit('tile', t);
+    io.emit('tile', JSON.stringify(t));
 }
 
 function tileClicked(socket, pos) {
@@ -231,7 +233,7 @@ function tileClicked(socket, pos) {
         if (tile.adjacent == 0 && !tile.mine) {
             for (var i=-1; i<=1; i++) {
                 for (var j=-1; j<=1; j++) {
-                    tileClicked(socket, new Position(x+i, y+j));
+                    if (!tiles[x+i][y+j].revealed) tileClicked(socket, new Position(x+i, y+j));
                 }
             }
         }
