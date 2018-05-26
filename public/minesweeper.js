@@ -76,7 +76,7 @@ socket.on('tile', function(tile){
     bbox.right = Math.max(bbox.right, x);
     bbox.up = Math.min(bbox.up, y);
     bbox.down = Math.max(bbox.down, y);
-    if (initialLoadDone) draw();
+    //if (initialLoadDone) draw();
 });
 
 socket.on('doneload', function(){

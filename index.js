@@ -39,7 +39,7 @@ class User {
             beststreak: 0
         };
         this.dead = false;
-        this.respawntime = 1000;
+        this.respawntime = 10000;
     }
 
     setpass(password) {
@@ -61,6 +61,7 @@ class User {
         if (this.socket != null) {
             this.socket.emit('dead', this.respawntime/1000);
         }
+        this.respawntime += 5000;
     }
 
     respawn(user) {
@@ -207,12 +208,7 @@ function sendTile(pos) {
     io.emit('tile', JSON.stringify(t));
 }
 
-function tileClicked(socket, pos) {
-    if (!socket.loggedin || socket.user.dead) {
-        //console.log(socket.user.dead);
-        return;
-    }
-    if (typeof pos == "string") pos = JSON.parse(pos);
+function clearTile(socket, pos) {
     var x = pos.x;
     var y = pos.y;
     console.log(x+' '+y);
@@ -233,11 +229,23 @@ function tileClicked(socket, pos) {
         if (tile.adjacent == 0 && !tile.mine) {
             for (var i=-1; i<=1; i++) {
                 for (var j=-1; j<=1; j++) {
-                    if (!tiles[x+i][y+j].revealed) tileClicked(socket, new Position(x+i, y+j));
+                    if (!tiles[x+i][y+j].revealed) clearTile(socket, new Position(x+i, y+j));
                 }
             }
         }
     }
+}
+
+function tileClicked(socket, pos) {
+    if (!socket.loggedin || socket.user.dead) {
+        //console.log(socket.user.dead);
+        return;
+    }
+    if (typeof pos == "string") pos = JSON.parse(pos);
+    var x = pos.x;
+    var y = pos.y;
+    clearTile(socket, pos);
+    io.emit('doneload');
 }
 
 function tileFlagged(socket, pos) {
@@ -257,4 +265,5 @@ function tileFlagged(socket, pos) {
         tile.flagged = true;
     }
     sendTile(pos);
+    io.emit('doneload');
 }
