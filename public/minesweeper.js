@@ -37,8 +37,17 @@ socket.on('loginfail', function(){
 });
 
 var mystat;
-socket.on('mystats', function(stats) {
-    mystat = JSON.parse(stats);
+var userstats = {};
+var onlineusers = new Set();
+socket.on('stats', function(stats) {
+    console.log(stats);
+    stats = JSON.parse(stats);
+    if (stats.name == username) {
+        mystat = stats;
+    }
+    userstats[stats.name] = stats;
+    onlineusers.add(stats.name);
+    console.log(onlineusers);
 })
 
 socket.on('dimensions', function(dim){
@@ -92,6 +101,45 @@ socket.on('doneload', function(){
     }
     draw();
 });
+
+class Cursor {
+    constructor(user, pos) {
+        this.user = user;
+        this.pos = pos;
+    }
+
+    move(pos) {
+        this.tpos = pos;
+        this.intv = setInterval(function(cursor){
+            cursor.pos.x = (cursor.pos.x + cursor.tpos.x)/2;
+            cursor.pos.y = (cursor.pos.y + cursor.tpos.y)/2;
+            if (cursor.pos.x == cursor.tpos.x && cursor.pos.y == cursor.tpos.y) {
+                clearInterval(cursor.intv);
+            }
+            if (cursor.pos.x > leftmost - 50 && cursor.pos.x < rightmost && cursor.pos.y > upmost - 50 && cursor.pos.y < downmost) {
+                draw();
+            }
+        }, 50, this);
+        
+    }
+
+    draw() {
+        if (cursor.pos.x > leftmost - 50 && cursor.pos.x < rightmost && cursor.pos.y > upmost - 50 && cursor.pos.y < downmost) {
+            canvas.drawImage(images['cursor'], (cursor.pos.x-leftmost+0.5)*(tilesize*tilescale), (cursor.pos.y-upmost+0.5)*(tilesize*tilescale));
+        }
+    }
+}
+
+// var cursors = {};
+// socket.on('cursor', function(cursor){
+//     cursor = JSON.parse(cursor);
+//     var user = cursor.user;
+//     var pos = cursor.pos;
+//     if (cursors[user] == null) {
+//         cursors[user] = new Cursor(user, pos);
+//     }
+//     cursors[user].move(pos);
+// })
 
 var dead = false;
 var respawntime = 0;
@@ -160,12 +208,11 @@ function preload() {
     images['unrevealed'] = loadImage('tiles/unrevealed.png');
     images['flag'] = loadImage('tiles/flag.png');
     images['clickedmine'] = loadImage('tiles/clickedmine.png');
+    images['cursor'] = loadImage('cursor.png');
 }
 
 var tilesize = 16;
 var tilescale = 1;
-
-//var hi = setInterval(draw(), 1000);
 
 function drawTile(x, y, pos, scale) {
 
@@ -341,6 +388,15 @@ function draw() {
     //     canvas.drawImage(images.adj[i], 96, ypos);
     //     ypos += 16;
     // }
+    console.log(onlineusers.keys());
+    onlineusers.forEach( function(user, _a, _b) {
+        var pos = worldToScreenCoords(userstats[user].cursor);
+        console.log(pos);
+        canvas.drawImage(
+            images.cursor, 
+            pos.x+(tilesize*tilescale)/2, 
+            pos.y+(tilesize*tilescale)/2);
+    });
 
     if (dead) {
         canvas.fillStyle = "#00000088";
@@ -350,6 +406,20 @@ function draw() {
         canvas.fillText(respawntime, width/2, height/2);
     }
     
+}
+
+function worldToScreenCoords(pos) {
+    return new Position(
+        (pos.x - topLeft.x)*(tilesize*tilescale),
+        (pos.y - topLeft.y)*(tilesize*tilescale)
+    );
+}
+
+function screenToWorldCoords(pos) {
+    return new Position(
+        pos.x/(tilesize*tilescale) + topLeft.x,
+        pos.y/(tilesize*tilescale) + topLeft.y
+    );
 }
 
 function clickTile(pos) {

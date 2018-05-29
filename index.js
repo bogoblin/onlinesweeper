@@ -36,7 +36,8 @@ class User {
             total: 0,
             deaths: 0,
             currentstreak: 0,
-            beststreak: 0
+            beststreak: 0,
+            cursor: new Position
         };
         this.dead = false;
         this.respawntime = 10000;
@@ -150,9 +151,6 @@ io.on('connection', function(socket){
             }
         }
         io.emit('doneload');
-        setInterval(function(){
-            io.emit('mystats', JSON.stringify(socket.user.stats));
-        }, 10000);
     });
 
     // TODO rewrite the password system so that the password can come before the username
@@ -229,6 +227,7 @@ function clearTile(socket, pos) {
         if (tile.adjacent == 0 && !tile.mine) {
             for (var i=-1; i<=1; i++) {
                 for (var j=-1; j<=1; j++) {
+                    if (x+1 < 0 || x+i > dimensions.width || y+j < 0 || y+j > dimensions.height) continue;
                     if (!tiles[x+i][y+j].revealed) clearTile(socket, new Position(x+i, y+j));
                 }
             }
@@ -237,15 +236,21 @@ function clearTile(socket, pos) {
 }
 
 function tileClicked(socket, pos) {
-    if (!socket.loggedin || socket.user.dead) {
-        //console.log(socket.user.dead);
-        return;
-    }
-    if (typeof pos == "string") pos = JSON.parse(pos);
-    var x = pos.x;
-    var y = pos.y;
+    // if the user is dead then they can't click tiles
+    if (!socket.loggedin || socket.user.dead) return;
+
+    pos = JSON.parse(pos);
+
+    // update their cursor position
+    socket.user.stats.cursor.x = pos.x;
+    socket.user.stats.cursor.y = pos.y;
+    // clear the tile they clicked on
     clearTile(socket, pos);
-    io.emit('doneload');
+    
+    // send out the stats
+    io.emit('stats', JSON.stringify(socket.user.stats));
+    // doneload indicates no more data is to be sent and the client can draw the screen
+    io.emit('doneload'); 
 }
 
 function tileFlagged(socket, pos) {
@@ -265,5 +270,7 @@ function tileFlagged(socket, pos) {
         tile.flagged = true;
     }
     sendTile(pos);
+    var cursor = {user:socket.user.name, pos};
+    io.emit('cursor', JSON.stringify(cursor));
     io.emit('doneload');
 }
