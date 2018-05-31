@@ -293,6 +293,30 @@ function resizeWindow() {
     height = c.height;
 }
 
+var t = tilesize * tilescale;
+
+function drawStats(name, pos, corner) {
+    
+    rect = {
+        tl: new Position(pos.x + t/2, pos.y + t/2)
+    }
+    canvas.fillStyle = "white";
+    canvas.fillRect(
+        rect.tl.x,
+        rect.tl.y,
+        17*t,
+        7*t
+    );
+    canvas.fillStyle = "black";
+    canvas.textAlign = "left";
+    canvas.font = "16px courier";
+    canvas.fillText(name, rect.tl.x + t/2, rect.tl.y + t*1.5);
+    for (var i = 1; i <= 8; i++) {
+        if (userstats[name].tilesfound[i] == 0) continue;
+        canvas.drawImage(images.adj[i], rect.tl.x+(t/2)+t*4*(i-1)%4, rect.tl.y+(t*1.5)+t*Math.floor(i/4));
+    }
+}
+
 function draw() {
     canvas.fillStyle = "black";
     canvas.fillRect(0, 0, width, height);
@@ -312,72 +336,74 @@ function draw() {
         pos.x += 16;
     }
 
-    var statsw = 96; var statsh = 256;
-    canvas.fillStyle = "#00000088";
-    canvas.fillRect(0+8+4, 0+8+4, statsw, statsh);
-    canvas.fillStyle = "white";
-    canvas.fillRect(0+8, 0+8, statsw, statsh);
-    canvas.font = "16px courier";
-    canvas.textAlign = "left";
+    drawStats(username, new Position(0, 0), "topLeft");
+
+    // var statsw = 96; var statsh = 256;
+    // canvas.fillStyle = "#00000088";
+    // canvas.fillRect(0+8+4, 0+8+4, statsw, statsh);
+    // canvas.fillStyle = "white";
+    // canvas.fillRect(0+8, 0+8, statsw, statsh);
+    // canvas.font = "16px courier";
+    // canvas.textAlign = "left";
 
 
-    var xbasei = 16;
-    var ybasei = 16;
-    var xbaset = 36;
-    var ybaset = 30;
-    var i = 1;
-    canvas.fillStyle = "#0000ff";
-    canvas.drawImage(images.adj[i], xbasei, ybasei);
-    canvas.fillText(mystat.tilesfound[i], xbaset, ybaset);
+    // var xbasei = 16;
+    // var ybasei = 16;
+    // var xbaset = 36;
+    // var ybaset = 30;
+    // var i = 1;
+    // canvas.fillStyle = "#0000ff";
+    // canvas.drawImage(images.adj[i], xbasei, ybasei);
+    // canvas.fillText(mystat.tilesfound[i], xbaset, ybaset);
 
-    ybasei+=16;
-    ybaset+=16;
-    i++;
-    canvas.fillStyle = "#008000";
-    canvas.drawImage(images.adj[i], xbasei, ybasei);
-    canvas.fillText(mystat.tilesfound[i], xbaset, ybaset);
+    // ybasei+=16;
+    // ybaset+=16;
+    // i++;
+    // canvas.fillStyle = "#008000";
+    // canvas.drawImage(images.adj[i], xbasei, ybasei);
+    // canvas.fillText(mystat.tilesfound[i], xbaset, ybaset);
 
-    ybasei+=16;
-    ybaset+=16;
-    i++;
-    canvas.fillStyle = "#800000";
-    canvas.drawImage(images.adj[i], xbasei, ybasei);
-    canvas.fillText(mystat.tilesfound[i], xbaset, ybaset);
+    // ybasei+=16;
+    // ybaset+=16;
+    // i++;
+    // canvas.fillStyle = "#800000";
+    // canvas.drawImage(images.adj[i], xbasei, ybasei);
+    // canvas.fillText(mystat.tilesfound[i], xbaset, ybaset);
 
-    ybasei+=16;
-    ybaset+=16;
-    i++;
-    canvas.fillStyle = "#000080";
-    canvas.drawImage(images.adj[i], xbasei, ybasei);
-    canvas.fillText(mystat.tilesfound[i], xbaset, ybaset);
+    // ybasei+=16;
+    // ybaset+=16;
+    // i++;
+    // canvas.fillStyle = "#000080";
+    // canvas.drawImage(images.adj[i], xbasei, ybasei);
+    // canvas.fillText(mystat.tilesfound[i], xbaset, ybaset);
 
-    ybasei+=16;
-    ybaset+=16;
-    i++;
-    canvas.fillStyle = "#800000";
-    canvas.drawImage(images.adj[i], xbasei, ybasei);
-    canvas.fillText(mystat.tilesfound[i], xbaset, ybaset);
+    // ybasei+=16;
+    // ybaset+=16;
+    // i++;
+    // canvas.fillStyle = "#800000";
+    // canvas.drawImage(images.adj[i], xbasei, ybasei);
+    // canvas.fillText(mystat.tilesfound[i], xbaset, ybaset);
 
-    ybasei+=16;
-    ybaset+=16;
-    i++;
-    canvas.fillStyle = "#008080";
-    canvas.drawImage(images.adj[i], xbasei, ybasei);
-    canvas.fillText(mystat.tilesfound[i], xbaset, ybaset);
+    // ybasei+=16;
+    // ybaset+=16;
+    // i++;
+    // canvas.fillStyle = "#008080";
+    // canvas.drawImage(images.adj[i], xbasei, ybasei);
+    // canvas.fillText(mystat.tilesfound[i], xbaset, ybaset);
 
-    ybasei+=16;
-    ybaset+=16;
-    i++;
-    canvas.fillStyle = "#000000";
-    canvas.drawImage(images.adj[i], xbasei, ybasei);
-    canvas.fillText(mystat.tilesfound[i], xbaset, ybaset);
+    // ybasei+=16;
+    // ybaset+=16;
+    // i++;
+    // canvas.fillStyle = "#000000";
+    // canvas.drawImage(images.adj[i], xbasei, ybasei);
+    // canvas.fillText(mystat.tilesfound[i], xbaset, ybaset);
 
-    ybasei+=16;
-    ybaset+=16;
-    i++;
-    canvas.fillStyle = "#808080";
-    canvas.drawImage(images.adj[i], xbasei, ybasei);
-    canvas.fillText(mystat.tilesfound[i], xbaset, ybaset);
+    // ybasei+=16;
+    // ybaset+=16;
+    // i++;
+    // canvas.fillStyle = "#808080";
+    // canvas.drawImage(images.adj[i], xbasei, ybasei);
+    // canvas.fillText(mystat.tilesfound[i], xbaset, ybaset);
     // for (var i=1; i<=4; i++) {
     //     canvas.drawImage(images.adj[i], 16, ypos);
     //     canvas.fillText
