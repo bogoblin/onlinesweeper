@@ -26,4 +26,7 @@ class TileMap {
     click([x, y]) {
         alert('click!');
     }
+    rightClick([x, y]) {
+        alert('right click!');
+    }
 }

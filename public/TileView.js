@@ -95,7 +95,16 @@ class TileView {
             const dragVector = vectorSub(this.drag.dragStartScreen, screenCoords);
             if (vectorMagnitudeSquared(dragVector) < 1) {
                 // Dragging hasn't happened, so we send a click to the tile map
-                this.tileMap.click(this.screenToWorld(screenCoords));
+                const worldCoords = this.screenToWorld(screenCoords);
+                switch (event.button) {
+                    case 0: // left click
+                        this.tileMap.click(worldCoords);
+                        break;
+                    case 2: // right click
+                        this.tileMap.rightClick(worldCoords);
+                        break;
+                    default:
+                }
             }
         }
     }
