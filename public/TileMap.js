@@ -9,22 +9,21 @@ class TileMap {
         }
     }
 
-    getTileImage([x, y]) {
+    drawTile(worldCoords, screenCoords, context) {
+        const [x,y] = worldCoords;
+        const [screenX,screenY] = screenCoords;
         const d = Math.abs(x+y);
+        let img;
         if (d > 8) {
-            return this.images['unrevealed'];
+            img = this.images['unrevealed'];
         }
         else {
-            return this.images[d];
+            img = this.images[Math.floor(d)];
         }
+        context.drawImage(img, screenX, screenY);
     }
 
-    /**
-     * @param x {number}
-     * @param y {number}
-     * @return {boolean} true if you can drag the view from this tile, false otherwise
-     */
-    drag([x,y]) {
-        return true;
+    click([x, y]) {
+        alert('click!');
     }
 }

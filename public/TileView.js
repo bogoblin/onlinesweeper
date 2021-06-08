@@ -23,6 +23,15 @@ const vectorTimesScalar = (v1, s) => {
     return v;
 }
 
+const vectorMagnitudeSquared = (v1) => {
+    let result = 0;
+    for (let i=0; i<v1.length; i++)
+    {
+        result += v1[i]*v1[i];
+    }
+    return result;
+}
+
 class TileView {
     /**
      * @param canvas {HTMLCanvasElement}
@@ -37,7 +46,9 @@ class TileView {
 
         this.viewCenter = [0,0];
 
-        canvas.addEventListener('mousedown', this.clicked);
+        canvas.addEventListener('mousedown', this.clicked.bind(this));
+        canvas.addEventListener('mouseup', this.mouseUp.bind(this));
+        canvas.addEventListener('mousemove', this.mouseMove.bind(this));
         canvas.addEventListener('contextmenu', ()=>false);
 
         window.addEventListener("resize", () => {
@@ -45,6 +56,11 @@ class TileView {
         });
         this.updateCanvasSize();
 
+        this.drag = {
+            dragging: false,
+            dragStartScreen: [0,0],
+            viewCenterOnDragStart: [0,0]
+        }
 
         this.draw();
     }
@@ -54,23 +70,57 @@ class TileView {
         this.canvas.height = window.innerHeight - 5;
     }
 
+    /**
+     *
+     * @param event {MouseEvent}
+     */
     clicked(event) {
-        alert('clicked!');
+        const screenCoords = [event.clientX, event.clientY];
+        const worldCoords = this.screenToWorld(screenCoords);
+
+        this.drag.dragging = true;
+        this.drag.dragStartScreen = screenCoords;
+        this.drag.viewCenterOnDragStart = this.viewCenter;
     }
 
-    drawTileToScreen(image, [screenX, screenY]) {
-        this.context.drawImage(image, screenX, screenY);
+    /**
+     *
+     * @param event {MouseEvent}
+     */
+    mouseUp(event) {
+        if (this.drag.dragging) {
+            this.drag.dragging = false;
+
+            const screenCoords = [event.clientX, event.clientY];
+            const dragVector = vectorSub(this.drag.dragStartScreen, screenCoords);
+            if (vectorMagnitudeSquared(dragVector) < 1) {
+                // Dragging hasn't happened, so we send a click to the tile map
+                this.tileMap.click(this.screenToWorld(screenCoords));
+            }
+        }
+    }
+
+    /**
+     *
+     * @param event {MouseEvent}
+     */
+    mouseMove(event) {
+        if (this.drag.dragging) {
+            const screenCoords = [event.clientX, event.clientY];
+            const dragVector = vectorSub(this.drag.dragStartScreen, screenCoords);
+            const dragVectorInWorldSpace = vectorTimesScalar(dragVector, 1/this.tileSize);
+            this.viewCenter = vectorAdd(this.drag.viewCenterOnDragStart, dragVectorInWorldSpace);
+        }
     }
 
     draw() {
         const ts = this.tileSize;
         const { width, height } = this.canvas;
-        for (let x=-ts; x<=width+ts; x+=ts) {
-            for (let y=-ts; y<=height+ts; y+=ts) {
+        for (let x=0; x<=width+ts; x+=ts) {
+            for (let y=0; y<=height+ts; y+=ts) {
                 const worldCoords = this.screenToWorldInt([x, y]);
                 const screenCoords = this.worldToScreen(worldCoords);
-                const tileImage = this.tileMap.getTileImage(worldCoords);
-                this.drawTileToScreen(tileImage, screenCoords);
+                this.tileMap.drawTile(worldCoords, screenCoords, this.context);
             }
         }
 
