@@ -114,10 +114,6 @@ for (var x=0; x<dimensions.width; x++) {
     }
 }
 
-app.get('/', function(req, res){
-    res.sendFile(__dirname + '/index.html');
-});
-
 app.use(express.static('public'));
 
 var userRe = /^\w*$/;

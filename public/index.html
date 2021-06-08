@@ -1,0 +1,18 @@
+<!doctype html>
+<html>
+    <head>
+        <title>Online Minesweeper</title>
+    </head>
+    
+    <body style="margin: 0px; border: 0px; padding: 0px">
+        <canvas id="canvas" width="800" height="800" oncontextmenu="return false" style="margin: 0"></canvas>
+
+
+        <script type='application/javascript' src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.1.1/socket.io.js"></script>
+        <script type='application/javascript' src="TileView.js"></script>
+
+        <script>
+            const tileView = new TileView(canvas, 16, null, {'flag': 'tiles/flag.png'});
+        </script>
+    </body>
+</html>
