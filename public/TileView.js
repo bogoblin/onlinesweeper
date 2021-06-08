@@ -25,12 +25,11 @@ const vectorTimesScalar = (v1, s) => {
 
 class TileView {
     /**
-     * @param canvas HTMLCanvasElement
-     * @param tileSize number
-     * @param tileMap TileMap
-     * @param images Object
+     * @param canvas {HTMLCanvasElement}
+     * @param tileSize {number}
+     * @param tileMap {TileMap}
      */
-    constructor( canvas, tileSize, tileMap, images ) {
+    constructor( canvas, tileSize, tileMap ) {
         this.canvas = canvas;
         this.context = canvas.getContext('2d');
         this.tileSize = tileSize;
@@ -46,13 +45,6 @@ class TileView {
         });
         this.updateCanvasSize();
 
-        // Load images
-        this.images = {};
-        for (let imageKey of Object.keys(images)) {
-            const img = new Image();
-            img.src = images[imageKey];
-            this.images[imageKey] = img;
-        }
 
         this.draw();
     }
@@ -66,16 +58,19 @@ class TileView {
         alert('clicked!');
     }
 
-    drawTileToScreen(imageKey, [screenX, screenY]) {
-        this.context.drawImage(this.images[imageKey], screenX, screenY);
+    drawTileToScreen(image, [screenX, screenY]) {
+        this.context.drawImage(image, screenX, screenY);
     }
 
     draw() {
-        for (let x=-this.tileSize; x<=this.canvas.width+this.tileSize; x+=this.tileSize) {
-            for (let y=-this.tileSize; y<=this.canvas.height+this.tileSize; y+=this.tileSize) {
+        const ts = this.tileSize;
+        const { width, height } = this.canvas;
+        for (let x=-ts; x<=width+ts; x+=ts) {
+            for (let y=-ts; y<=height+ts; y+=ts) {
                 const worldCoords = this.screenToWorldInt([x, y]);
                 const screenCoords = this.worldToScreen(worldCoords);
-                this.drawTileToScreen('flag', screenCoords);
+                const tileImage = this.tileMap.getTileImage(worldCoords);
+                this.drawTileToScreen(tileImage, screenCoords);
             }
         }
 
@@ -85,15 +80,15 @@ class TileView {
     }
 
     screenToWorld(screenCoords) {
-        const width = this.canvas.width;
-        const height = this.canvas.height;
+        const { width, height } = this.canvas;
+        const ts = this.tileSize;
         const screenCenter = [width/2, height/2];
 
         // Calculate the vector that goes from the screen position to the center of the screen
         const screenToCenter = vectorSub(screenCenter, screenCoords);
 
         // Convert this into world space
-        const distanceFromViewCenterInWorldSpace = vectorTimesScalar(screenToCenter, 1/this.tileSize);
+        const distanceFromViewCenterInWorldSpace = vectorTimesScalar(screenToCenter, 1/ts);
 
         // Subtract from the view center to get result
         return vectorSub(this.viewCenter, distanceFromViewCenterInWorldSpace);
@@ -104,15 +99,17 @@ class TileView {
     }
 
     worldToScreen(worldCoords) {
-        const width = this.canvas.width;
-        const height = this.canvas.height;
+        const { width, height } = this.canvas;
+        const ts = this.tileSize;
         const screenCenter = [width/2, height/2];
 
         // Calculate the vector that goes from the world position to the world center
         const worldToCenter = vectorSub(this.viewCenter, worldCoords);
 
-        const distanceFromViewCenterInScreenSpace = vectorTimesScalar(worldToCenter, this.tileSize);
+        // Convert this into screen space
+        const distanceFromViewCenterInScreenSpace = vectorTimesScalar(worldToCenter, ts);
 
+        // Subtract from the screen center to get result
         return vectorSub(screenCenter, distanceFromViewCenterInScreenSpace);
     }
 }

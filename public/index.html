@@ -9,10 +9,19 @@
 
 
         <script type='application/javascript' src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.1.1/socket.io.js"></script>
+        <script type='application/javascript' src="TileMap.js"></script>
         <script type='application/javascript' src="TileView.js"></script>
 
         <script>
-            const tileView = new TileView(canvas, 16, null, {'flag': 'tiles/flag.png'});
+            let images = {
+                'unrevealed': 'tiles/unrevealed.png',
+                'flag': 'tiles/flag.png'
+            }
+            for (let i=0; i<=8; i++) {
+                images[i] = `tiles/${i}.png`
+            }
+            const tileMap = new TileMap(images);
+            const tileView = new TileView(canvas, 16, tileMap);
         </script>
     </body>
 </html>
