@@ -1,5 +1,5 @@
-import {vectorTimesScalar} from "./Vector2";
-import {readCoords} from "./SerializeUtils";
+import {vectorTimesScalar} from "./Vector2.js";
+import {readCoords} from "./SerializeUtils.js";
 
 export const chunkSize = 16;
 export class Chunk {
@@ -15,7 +15,6 @@ export class Chunk {
             }
         }
 
-        this.canvas = document.createElement('canvas');
         this.redraw = true; // This chunk needs to be drawn again
     }
 
@@ -35,7 +34,7 @@ export class Chunk {
         const row = worldCoords[1] - this.coords[1];
         const col = worldCoords[0] - this.coords[0];
         // todo: error handling - check that coords are in bounds of the chunk
-        const indexInChunk = row*chunkSize + col;
+        return row*chunkSize + col;
     }
 
     updateTile(worldCoords, tileId) {
@@ -48,6 +47,9 @@ export class Chunk {
     draw(context, [screenX, screenY], images, tileSize) {
         // Redraw this chunk if we need to
         if (this.redraw) {
+            if (!this.canvas) {
+                this.canvas = document.createElement('canvas');
+            }
             this.canvas.width = tileSize*chunkSize;
             this.canvas.height = tileSize*chunkSize;
             const chunkCtx = this.canvas.getContext('2d');

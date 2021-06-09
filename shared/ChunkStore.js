@@ -1,4 +1,4 @@
-import {chunkCoords, chunkKey, chunkSize} from "./Chunk";
+import {chunkCoords, chunkKey, chunkSize} from "./Chunk.js";
 
 export class ChunkStore {
     constructor() {
@@ -24,6 +24,8 @@ export class ChunkStore {
 
     updateTile(worldCoords, tileId) {
         const chunk = this.getChunk(worldCoords);
-        chunk.updateTile(worldCoords, tileId);
+        if (chunk) {
+            chunk.updateTile(worldCoords, tileId);
+        }
     }
 }
