@@ -1,4 +1,4 @@
-const chunkSize = 16;
+const chunkSize = 64;
 
 class TileMap {
     constructor( images ) {
@@ -28,6 +28,62 @@ class TileMap {
         if (img) {
             const [screenX,screenY] = screenCoords;
             context.drawImage(img, screenX, screenY);
+        }
+    }
+
+    draw(
+        topLeftWorldCoords,
+        topLeftScreenCoords,
+        bottomRightWorldCoords,
+        context,
+        tileSize,
+        tileView
+    ) {
+        const firstChunkCoords = this.chunkCoords(topLeftWorldCoords);
+        const lastChunkCoords = this.chunkCoords(bottomRightWorldCoords);
+
+        // If the last chunk is before the first chunk then we will get stuck in an infinite loop -
+        // this shouldn't happen but let's prevent against it
+        if (firstChunkCoords[0] > lastChunkCoords[0] || firstChunkCoords[1] > lastChunkCoords[1]) {
+            return;
+        }
+
+        // Find the difference between the world coordinates of the top left tile on the screen and its chunk top-left
+        const offset = vectorSub(topLeftWorldCoords, firstChunkCoords);
+        const screenOffset = vectorTimesScalar(offset, tileSize);
+        const firstChunkScreenCoords = vectorSub(topLeftScreenCoords, screenOffset);
+
+        // Iterate through the chunks and draw them
+        for (let chunkY=firstChunkCoords[1]; chunkY<=lastChunkCoords[1]; chunkY+=chunkSize) {
+            for (let chunkX=firstChunkCoords[0]; chunkX<=lastChunkCoords[0]; chunkX+=chunkSize) {
+                const [chunk, _] = this.chunkAndIndex([chunkX, chunkY]);
+                this.drawChunk(chunk, tileView.worldToScreen([chunkX, chunkY]), context, tileSize);
+            }
+        }
+    }
+
+    drawChunk(chunk, screenCoords, context, tileSize) {
+        const [screenX, screenY] = screenCoords;
+        if (chunk) {
+            // const [chunk, index] = this.chunkAndIndex(worldCoords);
+            let index = 0;
+            for (let row=0; row<chunkSize; row++) {
+                for (let col=0; col<chunkSize; col++) {
+                    const tileId = chunk[index];
+                    const img = this.images[tileId];
+
+                    context.drawImage(img, screenX+col*tileSize, screenY+row*tileSize);
+                    index++;
+                }
+            }
+        }
+        else {
+            for (let row=0; row<chunkSize; row++) {
+                for (let col=0; col<chunkSize; col++) {
+                    const img = this.images[5];
+                    context.drawImage(img, screenX+col*tileSize, screenY+row*tileSize);
+                }
+            }
         }
     }
 

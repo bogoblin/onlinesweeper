@@ -125,13 +125,17 @@ class TileView {
     draw() {
         const ts = this.tileSize;
         const { width, height } = this.canvas;
-        for (let x=0; x<=width+ts; x+=ts) {
-            for (let y=0; y<=height+ts; y+=ts) {
-                const worldCoords = this.screenToWorldInt([x, y]);
-                const screenCoords = this.worldToScreen(worldCoords);
-                this.tileMap.drawTile(worldCoords, screenCoords, this.context);
-            }
-        }
+        const topLeftWorldCoords = this.screenToWorldInt([0,0]);
+        const topLeftScreenCoords = this.worldToScreen(topLeftWorldCoords);
+        const bottomRightWorldCoords = this.screenToWorldInt([width, height]);
+        this.tileMap.draw(
+            topLeftWorldCoords,
+            topLeftScreenCoords,
+            bottomRightWorldCoords,
+            this.context,
+            ts,
+            this
+        );
 
         requestAnimationFrame(() => {
             this.draw();
