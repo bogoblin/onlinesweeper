@@ -11,9 +11,12 @@ export class Chunk {
         else {
             this.tiles = []; // public version - both client and server have this
             for (let i = 0; i < chunkSize * chunkSize; i++) {
-                this.tiles.push(i % 9); // todo: actually generate this properly
+                this.tiles.push(10); // todo: actually generate this properly
             }
         }
+
+        this.canvas = document.createElement('canvas');
+        this.redraw = true; // This chunk needs to be drawn again
     }
 
     /**
@@ -26,6 +29,49 @@ export class Chunk {
     serialize() {
         const chunkData = this.tiles.map(v => v+0x21).map(v => String.fromCharCode(v)).join('');
         return `h${chunkData}${this.coords[0]/chunkSize},${this.coords[1]/chunkSize}`;
+    }
+
+    indexOf(worldCoords) {
+        const row = worldCoords[1] - this.coords[1];
+        const col = worldCoords[0] - this.coords[0];
+        // todo: error handling - check that coords are in bounds of the chunk
+        const indexInChunk = row*chunkSize + col;
+    }
+
+    updateTile(worldCoords, tileId) {
+        const index = this.indexOf(worldCoords);
+        this.tiles[index] = tileId;
+
+        this.redraw = true;
+    }
+
+    draw(context, [screenX, screenY], images, tileSize) {
+        // Redraw this chunk if we need to
+        if (this.redraw) {
+            this.canvas.width = tileSize*chunkSize;
+            this.canvas.height = tileSize*chunkSize;
+            const chunkCtx = this.canvas.getContext('2d');
+            let index = 0;
+            for (let row=0; row<chunkSize; row++) {
+                for (let col=0; col<chunkSize; col++) {
+                    const tileId = this.tiles[index];
+                    const img = images[tileId];
+
+                    // if the image hasn't loaded yet, then we need to redraw when it has
+                    if (!img.complete) {
+                        img.addEventListener('load', () => {
+                            this.redraw = true;
+                        })
+                    }
+
+                    chunkCtx.drawImage(img, col*tileSize, row*tileSize);
+                    index++;
+                }
+            }
+            this.redraw = false;
+        }
+
+        context.drawImage(this.canvas, screenX, screenY);
     }
 }
 
@@ -40,3 +86,17 @@ export const chunkDeserialize = (data) => {
 
     return new Chunk(coords, chunkArray);
 }
+
+export const chunkCoords = ([x,y]) => {
+    return [
+        Math.floor(x/chunkSize)*chunkSize,
+        Math.floor(y/chunkSize)*chunkSize
+    ];
+}
+
+export const chunkKey = (worldCoords) => {
+    const worldTopLeft = chunkCoords(worldCoords);
+    return `${worldTopLeft[0]},${worldTopLeft[1]}`;
+}
+
+export const defaultChunk = new Chunk([0,0]);

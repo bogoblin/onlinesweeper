@@ -8,6 +8,9 @@ const server = new ws.Server({
 const sockets = [];
 const chunks = [];
 chunks.push(new Chunk([0,0]));
+chunks[0].updateTile([0,0],1);
+chunks[0].updateTile([1,0],3);
+chunks[0].updateTile([1,1],6);
 server.on('connection', (socket) => {
     sockets.push(socket);
 
