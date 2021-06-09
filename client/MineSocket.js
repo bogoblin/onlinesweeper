@@ -2,7 +2,8 @@ import {
     vectorTimesScalar, vectorSub, vectorMagnitudeSquared, vectorAdd
 } from '../shared/Vector2';
 
-import { chunkSize } from '../shared/Chunk';
+import {chunkDeserialize, chunkSize} from '../shared/Chunk';
+import {readCoords} from "../shared/SerializeUtils";
 class MineSocket {
     /**
      * @param socket {WebSocket}
@@ -42,7 +43,6 @@ class MineSocket {
     }
 
     /**
-     *
      * @param ev {MessageEvent}
      */
     receiveMessage(ev) {
@@ -51,32 +51,18 @@ class MineSocket {
             const leaderChar = data.charAt(0);
             switch (leaderChar) {
                 case 'h': { // cHunk
-                    const chunkArray = [];
-                    // The next chunkSize^2 characters are encoded as readable text
-                    for (let i = 1; i <= chunkSize * chunkSize; i++) {
-                        chunkArray.push(data.charCodeAt(i) - 0x21);
-                    }
-                    // The rest of the string is the coordinates of the chunk, divided by chunk size
-                    const coords = vectorTimesScalar(this.readCoords(data, chunkSize * chunkSize + 1), chunkSize);
+                    const chunk = chunkDeserialize(data);
 
-                    this.tileMap.addChunk(coords, chunkArray);
+                    this.tileMap.addChunk(chunk.coords, chunk.tiles);
                 } break;
                 case 't': { // Tile update
                     const newValue = data.charCodeAt(1) - 0x21;
-                    const coords = this.readCoords(data, 2);
+                    const coords = readCoords(data, 2);
                     this.tileMap.updateTile(coords, newValue);
                 } break;
             }
         }
     }
 
-    /**
-     *
-     * @param data {String}
-     * @param start {number}
-     */
-    readCoords(data, start) {
-        return data.substr(start).split(',').map(value => parseInt(value, 10));
-    }
 }
 export default MineSocket;
