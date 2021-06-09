@@ -1,4 +1,4 @@
-const chunkSize = 64;
+const chunkSize = 16;
 
 class TileMap {
     constructor( images ) {
@@ -11,24 +11,6 @@ class TileMap {
         }
 
         this.chunks = {};
-    }
-
-    drawTile(worldCoords, screenCoords, context) {
-        const [x,y] = worldCoords;
-        const chunk = this.chunks[this.chunkKey(worldCoords)];
-        let img;
-        if (chunk) {
-            const [chunk, index] = this.chunkAndIndex(worldCoords);
-            img = this.images[chunk[index]];
-        }
-        else {
-            img = this.images[0];
-        }
-
-        if (img) {
-            const [screenX,screenY] = screenCoords;
-            context.drawImage(img, screenX, screenY);
-        }
     }
 
     draw(
@@ -48,11 +30,6 @@ class TileMap {
             return;
         }
 
-        // Find the difference between the world coordinates of the top left tile on the screen and its chunk top-left
-        const offset = vectorSub(topLeftWorldCoords, firstChunkCoords);
-        const screenOffset = vectorTimesScalar(offset, tileSize);
-        const firstChunkScreenCoords = vectorSub(topLeftScreenCoords, screenOffset);
-
         // Iterate through the chunks and draw them
         for (let chunkY=firstChunkCoords[1]; chunkY<=lastChunkCoords[1]; chunkY+=chunkSize) {
             for (let chunkX=firstChunkCoords[0]; chunkX<=lastChunkCoords[0]; chunkX+=chunkSize) {
@@ -65,7 +42,6 @@ class TileMap {
     drawChunk(chunk, screenCoords, context, tileSize) {
         const [screenX, screenY] = screenCoords;
         if (chunk) {
-            // const [chunk, index] = this.chunkAndIndex(worldCoords);
             let index = 0;
             for (let row=0; row<chunkSize; row++) {
                 for (let col=0; col<chunkSize; col++) {
@@ -80,7 +56,7 @@ class TileMap {
         else {
             for (let row=0; row<chunkSize; row++) {
                 for (let col=0; col<chunkSize; col++) {
-                    const img = this.images[5];
+                    const img = this.images[10];
                     context.drawImage(img, screenX+col*tileSize, screenY+row*tileSize);
                 }
             }
@@ -124,7 +100,7 @@ class TileMap {
         let newChunk = chunk;
         if (chunk.length !== chunkSize*chunkSize) {
             for (let i=chunk.length; i<chunkSize*chunkSize; i++) {
-                newChunk[i] = 0;
+                newChunk[i] = 10;
             }
         }
 
