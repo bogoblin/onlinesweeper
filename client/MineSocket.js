@@ -1,3 +1,8 @@
+import {
+    vectorTimesScalar, vectorSub, vectorMagnitudeSquared, vectorAdd
+} from '../shared/Vector2';
+
+import { chunkSize } from '../shared/Chunk';
 class MineSocket {
     /**
      * @param socket {WebSocket}
@@ -74,3 +79,4 @@ class MineSocket {
         return data.substr(start).split(',').map(value => parseInt(value, 10));
     }
 }
+export default MineSocket;

@@ -1,4 +1,8 @@
-const chunkSize = 16;
+import {
+    vectorTimesScalar, vectorSub, vectorMagnitudeSquared, vectorAdd
+} from '../shared/Vector2';
+
+import Chunk from "../shared/Chunk";
 
 class TileMap {
     constructor( images ) {
@@ -36,8 +40,8 @@ class TileMap {
         }
 
         // Iterate through the chunks and draw them
-        for (let chunkY=firstChunkCoords[1]; chunkY<=lastChunkCoords[1]; chunkY+=chunkSize) {
-            for (let chunkX=firstChunkCoords[0]; chunkX<=lastChunkCoords[0]; chunkX+=chunkSize) {
+        for (let chunkY=firstChunkCoords[1]; chunkY<=lastChunkCoords[1]; chunkY+=Chunk.chunkSize) {
+            for (let chunkX=firstChunkCoords[0]; chunkX<=lastChunkCoords[0]; chunkX+=Chunk.chunkSize) {
                 const [chunk, _] = this.chunkAndIndex([chunkX, chunkY]);
                 this.drawChunk(chunk, tileView.worldToScreen([chunkX, chunkY]), context, tileSize);
             }
@@ -49,8 +53,8 @@ class TileMap {
         const [screenX, screenY] = screenCoords;
         if (chunk) {
             let index = 0;
-            for (let row=0; row<chunkSize; row++) {
-                for (let col=0; col<chunkSize; col++) {
+            for (let row=0; row<Chunk.chunkSize; row++) {
+                for (let col=0; col<Chunk.chunkSize; col++) {
                     const tileId = chunk[index];
                     const img = this.images[tileId];
 
@@ -60,8 +64,8 @@ class TileMap {
             }
         }
         else {
-            for (let row=0; row<chunkSize; row++) {
-                for (let col=0; col<chunkSize; col++) {
+            for (let row=0; row<Chunk.chunkSize; row++) {
+                for (let col=0; col<Chunk.chunkSize; col++) {
                     const img = this.images[10];
                     context.drawImage(img, screenX+col*tileSize, screenY+row*tileSize);
                 }
@@ -80,7 +84,8 @@ class TileMap {
             }
         }
     }
-    rightClick([x, y]) {
+
+    rightClick(worldCoords) {
         if (this.socket) {
             this.socket.sendFlagMessage(worldCoords);
         }
@@ -88,8 +93,8 @@ class TileMap {
 
     chunkCoords([x,y]) {
         return [
-            Math.floor(x/chunkSize)*chunkSize,
-            Math.floor(y/chunkSize)*chunkSize
+            Math.floor(x/Chunk.chunkSize)*Chunk.chunkSize,
+            Math.floor(y/Chunk.chunkSize)*Chunk.chunkSize
         ];
     }
 
@@ -97,7 +102,7 @@ class TileMap {
         const chunkCoords = this.chunkCoords(worldCoords);
         const row = worldCoords[1] - chunkCoords[1];
         const col = worldCoords[0] - chunkCoords[0];
-        const indexInChunk = row*chunkSize + col;
+        const indexInChunk = row*Chunk.chunkSize + col;
 
         return [this.chunks[this.chunkKey(chunkCoords)], indexInChunk];
     }
@@ -114,8 +119,8 @@ class TileMap {
      */
     addChunk(worldTopLeft, chunk) {
         let newChunk = chunk;
-        if (chunk.length !== chunkSize*chunkSize) {
-            for (let i=chunk.length; i<chunkSize*chunkSize; i++) {
+        if (chunk.length !== Chunk.chunkSize*Chunk.chunkSize) {
+            for (let i=chunk.length; i<Chunk.chunkSize*Chunk.chunkSize; i++) {
                 newChunk[i] = 10;
             }
         }
@@ -128,3 +133,4 @@ class TileMap {
         chunk[index] = tileId;
     }
 }
+export default TileMap;

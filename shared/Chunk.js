@@ -2,14 +2,13 @@ const chunkSize = 16;
 class Chunk {
     constructor(coords) {
         this.coords = coords;
-        this.tiles = []; // public version
+        this.tiles = []; // public version - both client and server have this
         for (let i=0; i<chunkSize*chunkSize; i++) {
             this.tiles.push(i%9); // todo: actually generate this properly
         }
     }
 
     /**
-     *
      * @param socket {WebSocket}
      */
     send(socket) {
@@ -17,4 +16,7 @@ class Chunk {
         socket.send(`h${chunkData}${this.coords[0]/chunkSize},${this.coords[1]/chunkSize}`);
     }
 }
-export default Chunk;
+module.exports = {
+    Chunk: Chunk,
+    chunkSize: chunkSize
+};

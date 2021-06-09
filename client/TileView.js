@@ -1,36 +1,6 @@
-const vectorSub = (v1, v2) => {
-    let v = [];
-    for (let i=0; i<v1.length; i++) {
-        v[i] = v1[i] - v2[i];
-    }
-    return v;
-}
-
-const vectorAdd = (v1, v2) => {
-    let v = [];
-    for (let i=0; i<v1.length; i++) {
-        v[i] = v1[i] + v2[i];
-    }
-    return v;
-}
-
-const vectorTimesScalar = (v1, s) => {
-    let v = [];
-    for (let i=0; i<v1.length; i++)
-    {
-        v[i] = v1[i] * s;
-    }
-    return v;
-}
-
-const vectorMagnitudeSquared = (v1) => {
-    let result = 0;
-    for (let i=0; i<v1.length; i++)
-    {
-        result += v1[i]*v1[i];
-    }
-    return result;
-}
+import {
+    vectorTimesScalar, vectorSub, vectorMagnitudeSquared, vectorAdd
+} from '../shared/Vector2'
 
 class TileView {
     /**
@@ -49,7 +19,7 @@ class TileView {
         canvas.addEventListener('mousedown', this.clicked.bind(this));
         canvas.addEventListener('mouseup', this.mouseUp.bind(this));
         canvas.addEventListener('mousemove', this.mouseMove.bind(this));
-        canvas.addEventListener('contextmenu', ()=>false);
+        canvas.addEventListener('contextmenu', ()=>false); // disable right click menu
 
         window.addEventListener("resize", () => {
             this.updateCanvasSize();
@@ -184,3 +154,4 @@ class TileView {
         return vectorSub(screenCenter, distanceFromViewCenterInScreenSpace);
     }
 }
+export default TileView;

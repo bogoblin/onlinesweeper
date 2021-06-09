@@ -1,5 +1,5 @@
 import ws from "ws";
-import Chunk from "./Chunk.js";
+import {Chunk} from "../shared/Chunk.js";
 
 const server = new ws.Server({
     port: 8081
