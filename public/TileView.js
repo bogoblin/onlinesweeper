@@ -63,6 +63,9 @@ class TileView {
         }
 
         this.draw();
+
+        // Set by MineSocket
+        this.socket = undefined;
     }
 
     updateCanvasSize() {
@@ -104,6 +107,11 @@ class TileView {
                         this.tileMap.rightClick(worldCoords);
                         break;
                     default:
+                }
+            }
+            else {
+                if (this.socket) {
+                    this.socket.sendMoveMessage(this.viewCenter);
                 }
             }
         }

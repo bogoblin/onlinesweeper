@@ -11,6 +11,11 @@ class TileMap {
         }
 
         this.chunks = {};
+
+        // To be set externally to a {MineSocket}
+        this.socket = undefined;
+
+        this.lastClicked = 0;
     }
 
     draw(
@@ -40,6 +45,7 @@ class TileMap {
     }
 
     drawChunk(chunk, screenCoords, context, tileSize) {
+        // todo: Don't re-render chunks every frame
         const [screenX, screenY] = screenCoords;
         if (chunk) {
             let index = 0;
@@ -63,11 +69,21 @@ class TileMap {
         }
     }
 
-    click([x, y]) {
-        alert('click!');
+    doubleClickTime = 100; // milliseconds
+    click(worldCoords) {
+        if (this.socket) {
+            if (performance.now() - this.lastClicked < this.doubleClickTime) {
+                this.socket.sendDoubleClickMessage(worldCoords);
+            }
+            else {
+                this.socket.sendClickMessage(worldCoords);
+            }
+        }
     }
     rightClick([x, y]) {
-        alert('right click!');
+        if (this.socket) {
+            this.socket.sendFlagMessage(worldCoords);
+        }
     }
 
     chunkCoords([x,y]) {

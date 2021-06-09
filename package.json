@@ -3,6 +3,8 @@
   "version": "0.0.1",
   "description": "online minesweeper app",
   "dependencies": {
-    "express": "^4.15.2"
-  }
+    "express": "^4.15.2",
+    "ws": "^7.4.6"
+  },
+  "type": "module"
 }
