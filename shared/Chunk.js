@@ -1,5 +1,6 @@
 import {vectorTimesScalar} from "./Vector2.js";
 import {readCoords} from "./SerializeUtils.js";
+import {tileInfo} from '../shared/Tile.js';
 
 export const chunkSize = 16;
 export class Chunk {

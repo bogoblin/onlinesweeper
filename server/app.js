@@ -3,6 +3,7 @@ import {Chunk} from "../shared/Chunk.js";
 import {ChunkStore} from "../shared/ChunkStore.js";
 import {Operation, userMessageDeserialize} from "../shared/UserMessage.js";
 import {MessageSender} from "./MessageSender.js";
+import {World} from "./World.js";
 
 const server = new ws.Server({
     port: 8081
@@ -19,4 +20,6 @@ for (let i=0; i<16; i++) {
 }
 chunks.addChunk(newChunk);
 
-const ms = new MessageSender(server, chunks);
+const ms = new MessageSender(server);
+const world = new World(ms);
+world.chunks = chunks;
