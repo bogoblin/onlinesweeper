@@ -59,15 +59,18 @@ export class Chunk {
                     const tileId = this.tiles[index];
                     const img = images[tileId];
 
-                    // if the image hasn't loaded yet, then we need to redraw when it has
-                    if (!img.complete) {
-                        img.addEventListener('load', () => {
-                            this.redraw = true;
-                        })
+                    if (img) {
+                        // if the image hasn't loaded yet, then we need to redraw when it has
+                        if (!img.complete) {
+                            img.addEventListener('load', () => {
+                                this.redraw = true;
+                            })
+                        }
+
+                        chunkCtx.drawImage(img, col * tileSize, row * tileSize);
                     }
 
-                    chunkCtx.drawImage(img, col*tileSize, row*tileSize);
-                    index++;
+                    index += 1;
                 }
             }
             this.redraw = false;
