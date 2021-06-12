@@ -1,8 +1,4 @@
-import {
-    vectorTimesScalar, vectorSub, vectorMagnitudeSquared, vectorAdd
-} from '../shared/Vector2';
-
-import {Chunk, chunkCoords, chunkKey, chunkSize, defaultChunk} from "../shared/Chunk";
+import {Chunk, chunkCoords, chunkSize, defaultChunk} from "../shared/Chunk";
 import {ChunkStore} from "../shared/ChunkStore";
 
 class TileMap {
@@ -25,7 +21,6 @@ class TileMap {
 
     draw(
         topLeftWorldCoords,
-        topLeftScreenCoords,
         bottomRightWorldCoords,
         context,
         tileSize,
@@ -58,14 +53,16 @@ class TileMap {
 
     doubleClickTime = 100; // milliseconds
     click(worldCoords) {
+        const now = performance.now();
         if (this.socket) {
-            if (performance.now() - this.lastClicked < this.doubleClickTime) {
+            if (now - this.lastClicked < this.doubleClickTime) {
                 this.socket.sendDoubleClickMessage(worldCoords);
             }
             else {
                 this.socket.sendClickMessage(worldCoords);
             }
         }
+        this.lastClicked = now;
     }
 
     rightClick(worldCoords) {
@@ -80,13 +77,6 @@ class TileMap {
      * @param chunk {number[]}
      */
     addChunk(worldTopLeft, chunk) {
-        let newChunk = chunk;
-        if (chunk.length !== chunkSize*chunkSize) {
-            for (let i=chunk.length; i<chunkSize*chunkSize; i++) {
-                newChunk[i] = 10;
-            }
-        }
-
         this.chunks.addChunk(new Chunk(worldTopLeft, chunk));
     }
 

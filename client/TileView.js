@@ -101,17 +101,14 @@ class TileView {
     }
 
     draw() {
-        const ts = this.tileSize;
         const { width, height } = this.canvas;
         const topLeftWorldCoords = this.screenToWorldInt([0,0]);
-        const topLeftScreenCoords = this.worldToScreen(topLeftWorldCoords);
         const bottomRightWorldCoords = this.screenToWorldInt([width, height]);
         this.tileMap.draw(
             topLeftWorldCoords,
-            topLeftScreenCoords,
             bottomRightWorldCoords,
             this.context,
-            ts,
+            this.tileSize,
             this
         );
 

@@ -10,9 +10,12 @@ const server = new ws.Server({
 const sockets = [];
 const chunks = new ChunkStore();
 const newChunk = new Chunk([0,0]);
-newChunk.updateTile([0,0],1);
-newChunk.updateTile([1,0],3);
-newChunk.updateTile([1,1],6);
+
+for (let i=0; i<16; i++) {
+    for (let j=0; j<16; j++) {
+        newChunk.updateTile([i,j], (i*j)%9);
+    }
+}
 chunks.addChunk(newChunk);
 server.on('connection', (socket) => {
     sockets.push(socket);
