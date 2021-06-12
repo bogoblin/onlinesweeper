@@ -1,5 +1,6 @@
 import {Chunk, chunkCoords, chunkSize, defaultChunk} from "../shared/Chunk";
 import {ChunkStore} from "../shared/ChunkStore";
+import {drawChunkCanvas} from "./TileGraphics";
 
 class TileMap {
     constructor( images ) {
@@ -46,7 +47,7 @@ class TileMap {
                 else {
                     chunkToDraw = defaultChunk;
                 }
-                chunkToDraw.draw(context, tileView.worldToScreen([chunkX, chunkY]), this.images, tileSize);
+                chunkToDraw.draw(context, tileView.worldToScreen([chunkX, chunkY]), drawChunkCanvas);
             }
         }
     }

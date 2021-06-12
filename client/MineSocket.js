@@ -53,6 +53,8 @@ class MineSocket {
             switch (leaderChar) {
                 case 'h': { // cHunk
                     const chunk = chunkDeserialize(data);
+                    console.log(chunk)
+                    console.log('hello')
 
                     this.tileMap.addChunk(chunk.coords, chunk.tiles);
                 } break;
