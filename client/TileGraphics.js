@@ -1,4 +1,4 @@
-import {adjacent, flag, mine, revealed} from "../shared/Tile.js";
+import {AdjacencyMask, adjacent, flag, mine, Revealed, revealed} from "../shared/Tile.js";
 import {vectorTimesScalar} from "../shared/Vector2";
 import {chunkSize} from "../shared/Chunk";
 
@@ -8,7 +8,7 @@ import spritesUrl from '../tiles.png';
 const sprites = new Image();
 sprites.src = spritesUrl;
 
-const debug = true;
+let debug = false;
 
 const getSpriteIndex = (tile) => {
     if (!revealed(tile)) {
@@ -29,8 +29,15 @@ const getSpriteIndex = (tile) => {
  * @param tile {number}
  */
 export const drawToCanvasContext = (context, canvasCoords, tile) => {
-    const spriteIndex = getSpriteIndex(tile);
+    if (debug) {
+        context.globalAlpha = 0.5;
 
+        const spriteIndex = getSpriteIndex(tile | Revealed);
+        const [x, y] = canvasCoords;
+        context.drawImage(sprites, spriteIndex * tileSize, 0, tileSize, tileSize, x, y, tileSize, tileSize);
+    }
+
+    const spriteIndex = getSpriteIndex(tile);
     const [x, y] = canvasCoords;
     context.drawImage(sprites, spriteIndex * tileSize, 0, tileSize, tileSize, x, y, tileSize, tileSize);
 

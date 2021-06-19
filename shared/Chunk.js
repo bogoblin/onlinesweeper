@@ -92,6 +92,7 @@ export class Chunk {
         const index = this.indexOf(worldCoords);
         if (index === -1) {
             world.reveal(worldCoords);
+            return;
         }
 
         const tileIsRevealedAlready = revealed(this.tiles[index]);
@@ -103,8 +104,10 @@ export class Chunk {
             for (let x = -1; x <= 1; x++) {
                 for (let y = -1; y <= 1; y++) {
                     const adjacentCoords = vectorAdd(worldCoords, [x,y]);
-                    // this.reveal(vectorAdd(worldCoords,[x,y]), world);
-                    world.reveal(adjacentCoords,world);
+                    const adjacentTile = this.getTile(adjacentCoords);
+                    if (!revealed(adjacentTile)) {
+                        this.reveal(adjacentCoords, world);
+                    }
                 }
             }
         }

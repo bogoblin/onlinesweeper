@@ -47,15 +47,13 @@ export class World {
             const tile = this.chunks.getTile(toReveal);
             if (revealed(tile)) { continue; }
 
-            if (!this.chunks.getChunk(toReveal)) {
-                // Generate adjacent chunks
-                for (let x = -1; x <= 1; x++) {
-                    for (let y = -1; y <= 1; y++) {
-                        const chunkCoords = vectorAdd(toReveal, vectorTimesScalar([x, y], chunkSize));
-                        if (!this.chunks.getChunk(chunkCoords)) {
-                            const newChunk = this.generateChunk(chunkCoords, 0.15);
-                            chunksUpdated.add(newChunk);
-                        }
+            // Generate adjacent chunks
+            for (let x = -1; x <= 1; x++) {
+                for (let y = -1; y <= 1; y++) {
+                    const chunkCoords = vectorAdd(toReveal, vectorTimesScalar([x, y], chunkSize));
+                    if (!this.chunks.getChunk(chunkCoords)) {
+                        const newChunk = this.generateChunk(chunkCoords, 0.15);
+                        chunksUpdated.add(newChunk);
                     }
                 }
             }
@@ -117,7 +115,9 @@ export class World {
     }
 
     greet(username) {
-        // this.messageSender.sendToPlayer(username, this.chunks.getChunk([0,0]));
+        for (let chunk of Object.values(this.chunks.chunks)) {
+            this.messageSender.sendToPlayer(username, chunk);
+        }
     }
 
     generateChunk(worldCoords, difficulty) {
