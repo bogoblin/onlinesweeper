@@ -16,3 +16,5 @@ const newChunk = new Chunk([0,0]);
 
 const ms = new MessageSender(server);
 const world = new World(ms);
+
+console.log(`Running server.`);

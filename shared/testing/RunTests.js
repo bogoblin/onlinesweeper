@@ -10,12 +10,9 @@ const getTests = (dir) => {
     for (let item of contents) {
         const itemPath = path.join(dir, item);
         if (testRegex.test(item)) {
-            console.log('found test '+itemPath)
             tests.push(itemPath);
         }
         if (!itemPath.startsWith('node_modules') && fs.lstatSync(itemPath).isDirectory()) {
-            // console.log('found dir')
-            const testsInDir = getTests(itemPath);
             tests = tests.concat(getTests(itemPath));
         }
     }
@@ -23,5 +20,7 @@ const getTests = (dir) => {
 }
 
 for (let test of getTests('.')) {
+    console.log(`${test}`);
     spawnSync(`node ${test}`, {stdio: 'inherit', shell: true});
+    console.log(``);
 }

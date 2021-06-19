@@ -8,6 +8,8 @@ import spritesUrl from '../tiles.png';
 const sprites = new Image();
 sprites.src = spritesUrl;
 
+const debug = true;
+
 const getSpriteIndex = (tile) => {
     if (!revealed(tile)) {
         if (flag(tile)) return 10;
@@ -31,6 +33,11 @@ export const drawToCanvasContext = (context, canvasCoords, tile) => {
 
     const [x, y] = canvasCoords;
     context.drawImage(sprites, spriteIndex * tileSize, 0, tileSize, tileSize, x, y, tileSize, tileSize);
+
+    if (debug) {
+        context.strokeStyle = "2px solid red";
+        context.strokeRect(0,0,context.canvas.width, context.canvas.height);
+    }
 }
 
 export const drawChunkCanvas = (chunk) => {

@@ -22,6 +22,11 @@ export class ChunkStore {
         return this.chunks[chunkKey(worldCoords)];
     }
 
+    getTile(worldCoords) {
+        const chunk = this.getChunk(worldCoords);
+        return chunk? chunk.getTile(worldCoords) : 0;
+    }
+
     updateTile(worldCoords, tileId) {
         const chunk = this.getChunk(worldCoords);
         if (chunk) {

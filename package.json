@@ -8,6 +8,7 @@
   },
   "type": "module",
   "scripts": {
-    "test": "node shared/testing/RunTests.js"
+    "test": "node shared/testing/RunTests.js",
+    "run": "node server/app.js"
   }
 }

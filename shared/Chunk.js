@@ -1,6 +1,6 @@
 import {vectorAdd, vectorTimesScalar} from "./Vector2.js";
 import {readCoords} from "./SerializeUtils.js";
-import {adjacent, Mine, mine, revealed, Revealed} from "./Tile.js";
+import {adjacent, Flag, flag, Mine, mine, revealed, Revealed} from "./Tile.js";
 
 export const chunkSize = 16;
 export class Chunk {
@@ -38,9 +38,18 @@ export class Chunk {
 
     updateTile(worldCoords, tileId) {
         const index = this.indexOf(worldCoords);
+        if (index === -1) return;
+
         this.tiles[index] = tileId;
 
         this.redraw = true;
+    }
+
+    getTile(worldCoords) {
+        const index = this.indexOf(worldCoords);
+        if (index === -1) return;
+
+        return this.tiles[index];
     }
 
     draw(context, [screenX, screenY], drawFunction) {
@@ -72,38 +81,60 @@ export class Chunk {
                         const adjIndex = adjChunk.indexOf(coordsOfAdjTile);
                         adjChunk.tiles[adjIndex] += 1;
                     }
+                } else {
+                    this.tiles[indexOfAdjTile] += 1;
                 }
             }
         }
     }
 
-    reveal(worldCoords, chunkStore) {
+    reveal(worldCoords, world) {
         const index = this.indexOf(worldCoords);
-        if (index === -1) return;
+        if (index === -1) {
+            world.reveal(worldCoords);
+        }
 
         const tileIsRevealedAlready = revealed(this.tiles[index]);
         if (tileIsRevealedAlready) return;
 
-        this.tiles[index] |= Revealed;
+        this.tiles[index] += Revealed;
 
         if (adjacent(this.tiles[index]) === 0) {
-
-            // Now we need to update the number of adjacent tiles
             for (let x = -1; x <= 1; x++) {
                 for (let y = -1; y <= 1; y++) {
-                    const coordsOfAdjTile = vectorAdd(worldCoords, [x, y]);
-                    const indexOfAdjTile = this.indexOf(coordsOfAdjTile);
-                    if (indexOfAdjTile === -1) {
-                        const adjChunk = chunkStore.getChunk(coordsOfAdjTile);
-                        if (adjChunk) {
-                            adjChunk.reveal(coordsOfAdjTile, chunkStore);
-                        }
-                    } else {
-                        this.reveal(coordsOfAdjTile, chunkStore);
-                    }
+                    const adjacentCoords = vectorAdd(worldCoords, [x,y]);
+                    // this.reveal(vectorAdd(worldCoords,[x,y]), world);
+                    world.reveal(adjacentCoords,world);
                 }
             }
         }
+        else {
+        }
+    }
+
+    flag(worldCoords) {
+        const index = this.indexOf(worldCoords);
+        if (index === -1) return;
+
+        const tile = this.tiles[index];
+        if (flag(tile)) {
+            this.tiles[index] -= Flag;
+        } else {
+            this.tiles[index] += Flag;
+        }
+    }
+
+    topLeft() {
+        return this.coords;
+    }
+    topRight() {
+        return vectorAdd(this.topLeft(), [chunkSize-1, 0]);
+    }
+    bottomLeft() {
+        return vectorAdd(this.topLeft(), [0, chunkSize-1]);
+    }
+    bottomRight() {
+        return vectorAdd(this.topLeft(), [chunkSize-1, chunkSize-1]);
     }
 }
 

@@ -19,7 +19,7 @@ class TileView {
         canvas.addEventListener('mousedown', this.clicked.bind(this));
         canvas.addEventListener('mouseup', this.mouseUp.bind(this));
         canvas.addEventListener('mousemove', this.mouseMove.bind(this));
-        canvas.addEventListener('contextmenu', ()=>false); // disable right click menu
+        canvas.oncontextmenu = () => false; // disable right click
 
         window.addEventListener("resize", () => {
             this.updateCanvasSize();

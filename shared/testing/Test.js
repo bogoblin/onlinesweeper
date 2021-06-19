@@ -1,7 +1,7 @@
 let tests = [];
 
 export const test = (description, action) => {
-    tests.push(action);
+    tests.push({ description, action });
 }
 
 export const equals = (expected, actual) => {
@@ -31,10 +31,10 @@ export const run = () => {
     const numberOfTests = tests.length;
     console.log(`Running ${numberOfTests} tests.`);
     for (let i=0; i<numberOfTests; i++) {
-        console.log(`Test ${i+1} of ${numberOfTests}:`);
         const t = tests[i];
+        console.log(`Test ${i+1} of ${numberOfTests}: ${t.description}`);
         try {
-            t();
+            t.action();
         } catch (e) {
             console.log(`Test failed: ${e.toString()}`);
             continue;
