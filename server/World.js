@@ -2,7 +2,7 @@ import {ChunkStore} from "../shared/ChunkStore.js";
 import {Operation} from "../shared/UserMessage.js";
 import {Chunk, chunkSize} from "../shared/Chunk.js";
 import {vectorAdd, vectorTimesScalar} from "../shared/Vector2.js";
-import {mine, revealed} from "../shared/Tile.js";
+import {adjacent, mine, revealed, tileInfo} from "../shared/Tile.js";
 
 export class World {
     constructor(messageSender) {
@@ -19,11 +19,13 @@ export class World {
         switch (operation) {
             case Operation.Click:
                 this.reveal(worldCoords);
-                chunk = this.chunks.getChunk(worldCoords);
                 break;
             case Operation.Flag:
                 this.flag(worldCoords);
-                chunk = this.chunks.getChunk(worldCoords);
+                break;
+            case Operation.DoubleClick:
+                this.doubleClick(worldCoords);
+                break;
             default:
                 break;
         }
@@ -63,10 +65,6 @@ export class World {
             chunksUpdated.add(chunk);
 
             itemsHandled++;
-
-            if (itemsHandled >= 100) {
-                break;
-            }
         }
 
         for (let chunk of chunksUpdated) {
@@ -74,33 +72,47 @@ export class World {
         }
     }
 
-    revealDo(worldCoords, chunksGenerated = 0) {
-        if (chunksGenerated > 0) {
-            return;
-        }
-        // Generate adjacent chunks
-        for (let x=-1; x<=1; x++) {
-            for (let y = -1; y <= 1; y++) {
-                const chunkCoords = vectorAdd(worldCoords, vectorTimesScalar([x,y], chunkSize));
-                if (!this.chunks.getChunk(chunkCoords)) {
-                    this.generateChunk(chunkCoords, 0.15);
-                    chunksGenerated += 1;
-                }
-            }
-        }
-
-        const chunk = this.chunks.getChunk(worldCoords);
-        try {
-            chunk.reveal(worldCoords, this, chunksGenerated);
-        } catch (e) {
-            console.log(e);
-        }
-    }
-
     flag(worldCoords) {
         let chunk = this.chunks.getChunk(worldCoords);
         if (chunk) {
             chunk.flag(worldCoords);
+            this.messageSender.sendToAll(chunk);
+        }
+    }
+
+    doubleClick(worldCoords) {
+        console.log(`double click ${worldCoords}`)
+        const tile = this.chunks.getTile(worldCoords);
+        if (!revealed(tile)) {
+            this.reveal(worldCoords);
+            return;
+        }
+        if (mine(tile)) {
+            return;
+        }
+
+        let numberOfAdjacentFlags = 0;
+        const revealCandidates = [];
+        for (let x=-1; x<=1; x++) {
+            for (let y=-1; y<=1; y++) {
+                const adjTileCoords = vectorAdd(worldCoords, [x,y]);
+                const adjTile = this.chunks.getTile(adjTileCoords);
+                const info = tileInfo(adjTile);
+                if (!info.revealed) {
+                    if (info.flag) {
+                        numberOfAdjacentFlags++;
+                    }
+                    else {
+                        revealCandidates.push(adjTileCoords);
+                    }
+                }
+            }
+        }
+        if (adjacent(tile) === numberOfAdjacentFlags) {
+            // reveal all adjacent tiles that aren't flagged
+            for (let t of revealCandidates) {
+                this.reveal(t);
+            }
         }
     }
 
@@ -116,62 +128,26 @@ export class World {
         console.log(`Generating new chunk at ${newChunk.coords}`);
 
         // Get adjacency from existing chunks
-        // Corners
-        const corners = [newChunk.topLeft(), newChunk.topRight(), newChunk.bottomLeft(), newChunk.bottomRight()];
-        for (let corner of corners) {
-            let adj = 0;
-            for (let x=-1; x<=1; x++) {
-                for (let y=-1; y<=1; y++) {
-                    const coords = vectorAdd(corner, [x,y]);
+        const bottomRight = newChunk.bottomRight();
+        for (let x=newChunk.coords[0]; x<=bottomRight[0]; x++) {
+            for (let y = newChunk.coords[1]; y <= bottomRight[1]; y++) {
+                let adj = 0;
+                // offsets
+                for (let xo = -1; xo <= 1; xo++) {
+                    for (let yo = -1; yo <= 1; yo++) {
+                        const coords = vectorAdd([x, y], [xo, yo]);
 
-                    // if we're checking within the new chunk, there won't be any mines there
-                    if (newChunk.indexOf(coords) !== -1) continue;
+                        // if we're checking within the new chunk, there won't be any mines there
+                        if (newChunk.indexOf(coords) !== -1) continue;
 
-                    // otherwise:
-                    const cornerChunk = this.chunks.getChunk(coords);
-                    if (cornerChunk) {
-                        adj += mine(cornerChunk.getTile(coords));
+                        // otherwise:
+                        const cornerChunk = this.chunks.getChunk(coords);
+                        if (cornerChunk) {
+                            adj += mine(cornerChunk.getTile(coords));
+                        }
                     }
                 }
-            }
-            newChunk.updateTile(corner, adj);
-        }
-
-        // Sides
-        for (let coordAlongSide = 1; coordAlongSide < chunkSize-2; coordAlongSide++) {
-            for (let direction of ['Left', 'Right', 'Up', 'Down'])
-            {
-                let directionOfSide;
-                let start;
-                switch (direction) {
-                    case 'Left':
-                        directionOfSide = [-1,0];
-                        start = newChunk.topLeft();
-                        break;
-                    case 'Right':
-                        directionOfSide = [1, 0];
-                        start = newChunk.bottomRight();
-                        break;
-                    case 'Up':
-                        directionOfSide = [0, -1];
-                        start = newChunk.topLeft();
-                        break;
-                    case 'Down':
-                        directionOfSide = [0, 1];
-                        start = newChunk.bottomRight();
-                        break;
-                }
-                const counterDirection = [-directionOfSide[1], -directionOfSide[0]];
-                const coordsOfSideTile = vectorAdd(start, vectorTimesScalar(counterDirection, coordAlongSide));
-                const sideChunk = this.chunks.getChunk(vectorAdd(newChunk.topLeft(), directionOfSide));
-                if (sideChunk) {
-                    let adj = 0;
-                    for (let offsetAlongSide = -1; offsetAlongSide <= 1; offsetAlongSide++) {
-                        const coordsOfTileToCheck = vectorAdd(coordsOfSideTile, [-1, offsetAlongSide]);
-                        adj += mine(sideChunk.getTile(coordsOfTileToCheck));
-                    }
-                    newChunk.updateTile(coordsOfSideTile, adj);
-                }
+                newChunk.updateTile([x,y], adj);
             }
         }
 

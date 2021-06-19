@@ -128,13 +128,13 @@ export class Chunk {
         return this.coords;
     }
     topRight() {
-        return vectorAdd(this.topLeft(), [chunkSize-1, 0]);
+        return vectorAdd(this.topLeft(), [chunkSize, 0]);
     }
     bottomLeft() {
-        return vectorAdd(this.topLeft(), [0, chunkSize-1]);
+        return vectorAdd(this.topLeft(), [0, chunkSize]);
     }
     bottomRight() {
-        return vectorAdd(this.topLeft(), [chunkSize-1, chunkSize-1]);
+        return vectorAdd(this.topLeft(), [chunkSize, chunkSize]);
     }
 }
 
