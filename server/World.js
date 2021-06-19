@@ -89,24 +89,23 @@ export class World {
             return;
         }
 
-        let numberOfAdjacentFlags = 0;
-        const revealCandidates = [];
+        let knownAdjacentMines = 0;
+        const revealCandidates = []; // tiles to reveal if double clicking is valid
         for (let x=-1; x<=1; x++) {
             for (let y=-1; y<=1; y++) {
                 const adjTileCoords = vectorAdd(worldCoords, [x,y]);
                 const adjTile = this.chunks.getTile(adjTileCoords);
                 const info = tileInfo(adjTile);
-                if (!info.revealed) {
-                    if (info.flag) {
-                        numberOfAdjacentFlags++;
-                    }
-                    else {
-                        revealCandidates.push(adjTileCoords);
-                    }
+                if (info.revealed && info.mine) { // take into account revealed mines as well as flags
+                    knownAdjacentMines++;
+                } else if (!info.revealed && info.flag) { // flag
+                    knownAdjacentMines++;
+                } else if (!info.revealed && !info.flag) { // unrevealed and not a flag
+                    revealCandidates.push(adjTileCoords);
                 }
             }
         }
-        if (adjacent(tile) === numberOfAdjacentFlags) {
+        if (adjacent(tile) === knownAdjacentMines) {
             // reveal all adjacent tiles that aren't flagged
             for (let t of revealCandidates) {
                 this.reveal(t);
