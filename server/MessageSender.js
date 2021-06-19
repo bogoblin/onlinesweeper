@@ -25,9 +25,10 @@ export class MessageSender {
     }
 
     sendToAll(serializable) {
+        const data = serializable.publicSerialize();
         for (let player of Object.values(this.players)) {
             const socket = player.socket;
-            socket.send(serializable.serialize());
+            socket.send(data);
         }
     }
 
@@ -36,7 +37,7 @@ export class MessageSender {
 
         if (player) {
             const socket = player.socket;
-            socket.send(serializable.serialize());
+            socket.send(serializable.publicSerialize());
         }
     }
 }

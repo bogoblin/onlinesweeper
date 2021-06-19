@@ -1,6 +1,6 @@
 import {vectorAdd, vectorTimesScalar} from "./Vector2.js";
 import {readCoords} from "./SerializeUtils.js";
-import {adjacent, Flag, flag, Mine, mine, revealed, Revealed} from "./Tile.js";
+import {adjacent, Flag, flag, Mine, mine, publicVersion, revealed, Revealed} from "./Tile.js";
 
 export const chunkSize = 16;
 export class Chunk {
@@ -23,9 +23,6 @@ export class Chunk {
         socket.send(this.serialize());
     }
 
-    serialize() {
-        return 'h'+JSON.stringify(this);
-    }
 
     indexOf(worldCoords) {
         const row = worldCoords[1] - this.coords[1];
@@ -138,6 +135,16 @@ export class Chunk {
     }
     bottomRight() {
         return vectorAdd(this.topLeft(), [chunkSize, chunkSize]);
+    }
+
+    publicSerialize() {
+        const publicTiles = this.tiles.map(tile => publicVersion(tile));
+        const pubVer = new Chunk(this.coords, publicTiles);
+        return pubVer.serialize();
+    }
+
+    serialize() {
+        return 'h'+JSON.stringify(this);
     }
 }
 
