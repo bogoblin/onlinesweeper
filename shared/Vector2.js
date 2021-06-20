@@ -32,9 +32,16 @@ export const vectorMagnitudeSquared = (v1) => {
     return result;
 }
 
+/**
+ * Iterates over the coordinates in a given rectangle, in writing order.
+ * @param topLeft
+ * @param bottomRight
+ * @param action {function} Called for each coordinate in the rectangle.
+ * @param step {number} Amount to add for each step. Default is 1.
+ */
 export const forEachInRect = ([topLeft, bottomRight], action, step=1) => {
-    for (let x = topLeft[0]; x < bottomRight[0]; x+=step) {
-        for (let y = topLeft[1]; y < bottomRight[1]; y+=step) {
+    for (let y = topLeft[1]; y < bottomRight[1]; y+=step) {
+        for (let x = topLeft[0]; x < bottomRight[0]; x+=step) {
             action([x, y]);
         }
     }

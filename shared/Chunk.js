@@ -134,6 +134,9 @@ export class Chunk {
     bottomRight() {
         return vectorAdd(this.topLeft(), [chunkSize, chunkSize]);
     }
+    rect() {
+        return [this.topLeft(), this.bottomRight()];
+    }
 
     publicSerialize() {
         const publicTiles = this.tiles.map(tile => publicVersion(tile));
