@@ -3,8 +3,10 @@ import {userMessageDeserialize} from "../shared/UserMessage.js";
 export class MessageSender {
     world; // Set from World.js
 
-    constructor(server) {
+    constructor(server, world) {
         this.players = {};
+        this.world = world;
+        world.setMessageSender(this);
 
         server.on('connection', (socket) => {
             socket.username = 'frad';

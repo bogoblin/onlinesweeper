@@ -5,17 +5,22 @@ import {vectorAdd, vectorTimesScalar} from "../shared/Vector2.js";
 import {adjacent, mine, revealed, tileInfo} from "../shared/Tile.js";
 
 export class World {
-    constructor(messageSender) {
+    constructor() {
         this.chunks = new ChunkStore();
-        this.messageSender = messageSender;
-        messageSender.world = this;
 
         this.revealQueue = [];
     }
 
+    setMessageSender(messageSender) {
+        this.messageSender = messageSender;
+        messageSender.world = this;
+    }
+
     addChunk(chunk) {
         this.chunks.addChunk(chunk);
-        this.messageSender.sendToAll(chunk);
+        if (this.messageSender) {
+            this.messageSender.sendToAll(chunk);
+        }
         console.log(`Added chunk ${chunk.coords}`)
     }
 
