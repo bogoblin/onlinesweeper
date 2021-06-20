@@ -1,5 +1,5 @@
 import {AdjacencyMask, adjacent, flag, mine, Revealed, revealed} from "../shared/Tile.js";
-import {vectorTimesScalar} from "../shared/Vector2";
+import {forEachInRect, vectorTimesScalar} from "../shared/Vector2";
 import {chunkSize} from "../shared/Chunk";
 
 export const tileSize = 16;
@@ -8,7 +8,7 @@ import spritesUrl from '../tiles.png';
 const sprites = new Image();
 sprites.src = spritesUrl;
 
-let debug = false;
+let debug = true;
 
 const getSpriteIndex = (tile) => {
     if (!revealed(tile)) {
@@ -21,14 +21,13 @@ const getSpriteIndex = (tile) => {
     }
 }
 
-
 /**
  *
  * @param context {CanvasRenderingContext2D}
  * @param canvasCoords {number[]}
  * @param tile {number}
  */
-export const drawToCanvasContext = (context, canvasCoords, tile) => {
+export const drawTileToCanvasContext = (context, canvasCoords, tile) => {
     if (debug) {
         context.globalAlpha = 0.5;
 
@@ -57,15 +56,15 @@ export const drawChunkCanvas = (chunk) => {
     if (spritesAreLoaded()) {
         const chunkCtx = chunk.canvas.getContext('2d');
         let index = 0;
-        for (let y = 0; y < chunkSize; y++) {
-            for (let x = 0; x < chunkSize; x++) {
-                const tile = chunk.tiles[index];
-                const canvasCoords = vectorTimesScalar([x, y], tileSize);
-                drawToCanvasContext(chunkCtx, canvasCoords, tile);
+        const rect = [[0,0], [chunkSize, chunkSize]];
+        forEachInRect(rect, (tileCoords) => {
+            const tile = chunk.tiles[index];
+            const canvasCoords = vectorTimesScalar(tileCoords, tileSize);
+            drawTileToCanvasContext(chunkCtx, canvasCoords, tile);
 
-                index += 1;
-            }
-        }
+            index += 1;
+        });
+
         chunk.redraw = false;
     } else {
         addLoadCallbackForSprites(() => chunk.redraw = true);

@@ -1,7 +1,7 @@
 import {ChunkStore} from "../shared/ChunkStore.js";
 import {Operation} from "../shared/UserMessage.js";
 import {Chunk, chunkSize} from "../shared/Chunk.js";
-import {vectorAdd, vectorTimesScalar} from "../shared/Vector2.js";
+import {forEachInRect, forEachNeighbour, vectorAdd, vectorTimesScalar} from "../shared/Vector2.js";
 import {adjacent, mine, revealed, tileInfo} from "../shared/Tile.js";
 
 export class World {
@@ -57,16 +57,13 @@ export class World {
             const tile = this.chunks.getTile(toReveal);
             if (revealed(tile)) { continue; }
 
-            // Generate adjacent chunks
-            for (let x = -1; x <= 1; x++) {
-                for (let y = -1; y <= 1; y++) {
-                    const chunkCoords = vectorAdd(toReveal, vectorTimesScalar([x, y], chunkSize));
-                    if (!this.chunks.getChunk(chunkCoords)) {
-                        const newChunk = this.generateChunk(chunkCoords, 0.15);
-                        chunksUpdated.add(newChunk);
-                    }
+            // Generate this chunk and adjacent chunks
+            forEachNeighbour(toReveal, (chunkCoords) => {
+                if (!this.chunks.getChunk(chunkCoords)) {
+                    const newChunk = this.generateChunk(chunkCoords, 0.15);
+                    chunksUpdated.add(newChunk);
                 }
-            }
+            }, chunkSize); // step size is chunk size because we are checking neighbouring chunks
 
             const chunk = this.chunks.getChunk(toReveal);
             chunk.reveal(toReveal, this);
@@ -101,20 +98,18 @@ export class World {
 
         let knownAdjacentMines = 0;
         const revealCandidates = []; // tiles to reveal if double clicking is valid
-        for (let x=-1; x<=1; x++) {
-            for (let y=-1; y<=1; y++) {
-                const adjTileCoords = vectorAdd(worldCoords, [x,y]);
-                const adjTile = this.chunks.getTile(adjTileCoords);
-                const info = tileInfo(adjTile);
-                if (info.revealed && info.mine) { // take into account revealed mines as well as flags
-                    knownAdjacentMines++;
-                } else if (!info.revealed && info.flag) { // flag
-                    knownAdjacentMines++;
-                } else if (!info.revealed && !info.flag) { // unrevealed and not a flag
-                    revealCandidates.push(adjTileCoords);
-                }
+
+        forEachNeighbour(worldCoords, (adjTileCoords) => {
+            const adjTile = this.chunks.getTile(adjTileCoords);
+            const info = tileInfo(adjTile);
+            if (info.revealed && info.mine) { // take into account revealed mines as well as flags
+                knownAdjacentMines++;
+            } else if (!info.revealed && info.flag) { // flag
+                knownAdjacentMines++;
+            } else if (!info.revealed && !info.flag) { // unrevealed and not a flag
+                revealCandidates.push(adjTileCoords);
             }
-        }
+        });
         if (adjacent(tile) === knownAdjacentMines) {
             // reveal all adjacent tiles that aren't flagged
             for (let t of revealCandidates) {
@@ -136,38 +131,31 @@ export class World {
         const newChunk = new Chunk(worldCoords);
         console.log(`Generating new chunk at ${newChunk.coords}`);
 
+        const chunkRect = [newChunk.topLeft(), newChunk.bottomRight()];
+
         // Get adjacency from existing chunks
-        const bottomRight = newChunk.bottomRight();
-        for (let x=newChunk.coords[0]; x<=bottomRight[0]; x++) {
-            for (let y = newChunk.coords[1]; y <= bottomRight[1]; y++) {
-                let adj = 0;
-                // offsets
-                for (let xo = -1; xo <= 1; xo++) {
-                    for (let yo = -1; yo <= 1; yo++) {
-                        const coords = vectorAdd([x, y], [xo, yo]);
+        forEachInRect(chunkRect, (tileCoords) => {
+            let adj = 0;
+            // offsets
+            forEachNeighbour(tileCoords, (coords) => {
+                // if we're checking within the new chunk, there won't be any mines there
+                if (newChunk.indexOf(coords) !== -1) return;
 
-                        // if we're checking within the new chunk, there won't be any mines there
-                        if (newChunk.indexOf(coords) !== -1) continue;
-
-                        // otherwise:
-                        const cornerChunk = this.chunks.getChunk(coords);
-                        if (cornerChunk) {
-                            adj += mine(cornerChunk.getTile(coords));
-                        }
-                    }
+                // otherwise:
+                const cornerChunk = this.chunks.getChunk(coords);
+                if (cornerChunk) {
+                    adj += mine(cornerChunk.getTile(coords));
                 }
-                newChunk.updateTile([x,y], adj);
-            }
-        }
+            });
+            newChunk.updateTile(tileCoords, adj);
+        });
 
         // Add mines
-        for (let x=0; x<chunkSize; x++) {
-            for (let y=0; y<chunkSize; y++) {
-                if (Math.random() < difficulty) {
-                    newChunk.addMine(vectorAdd(newChunk.coords, [x,y]), this.chunks);
-                }
+        forEachInRect(chunkRect, (mineCoords) => {
+            if (Math.random() < difficulty) {
+                newChunk.addMine(mineCoords, this.chunks);
             }
-        }
+        })
 
         this.chunks.addChunk(newChunk);
         return newChunk;

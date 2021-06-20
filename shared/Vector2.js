@@ -31,3 +31,16 @@ export const vectorMagnitudeSquared = (v1) => {
     }
     return result;
 }
+
+export const forEachInRect = ([topLeft, bottomRight], action, step=1) => {
+    for (let x = topLeft[0]; x < bottomRight[0]; x+=step) {
+        for (let y = topLeft[1]; y < bottomRight[1]; y+=step) {
+            action([x, y]);
+        }
+    }
+}
+
+export const forEachNeighbour = (v, action, step=1) => {
+    // because forEachInRect is exclusive for the bottom and right coords, we have to add 1
+    forEachInRect([vectorAdd(v, [-step,-step]), vectorAdd(v, [step+1,step+1])], action);
+}

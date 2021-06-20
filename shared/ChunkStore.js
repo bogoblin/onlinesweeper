@@ -1,4 +1,4 @@
-import {chunkCoords, chunkKey, chunkSize} from "./Chunk.js";
+import {chunkKey} from "./Chunk.js";
 
 export class ChunkStore {
     constructor() {

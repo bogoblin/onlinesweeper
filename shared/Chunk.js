@@ -1,5 +1,4 @@
-import {vectorAdd, vectorTimesScalar} from "./Vector2.js";
-import {readCoords} from "./SerializeUtils.js";
+import {forEachNeighbour, vectorAdd} from "./Vector2.js";
 import {adjacent, Flag, flag, Mine, mine, publicVersion, revealed, Revealed} from "./Tile.js";
 
 export const chunkSize = 16;
@@ -24,20 +23,25 @@ export class Chunk {
     }
 
 
+    /**
+     * Chunk stores an array of tiles. This function returns the index of that array that corresponds to the given world coordinates.
+     * @param worldCoords {number[]} the coordinates to find the index of.
+     * @returns {number} the index for the tiles array for this coordinate. Returns -1 if the coordinate is not in this chunk.
+     */
     indexOf(worldCoords) {
         const row = worldCoords[1] - this.coords[1];
         const col = worldCoords[0] - this.coords[0];
         if (row >= chunkSize || col >= chunkSize || row < 0 || col < 0) {
-            return -1; // todo: what to do here? this shouldn't happen but might if there are bugs
+            return -1;
         }
         return row*chunkSize + col;
     }
 
-    updateTile(worldCoords, tileId) {
+    updateTile(worldCoords, tile) {
         const index = this.indexOf(worldCoords);
         if (index === -1) return;
 
-        this.tiles[index] = tileId;
+        this.tiles[index] = tile;
 
         this.redraw = true;
     }
@@ -68,21 +72,18 @@ export class Chunk {
         this.tiles[index] |= Mine;
 
         // Now we need to update the number of adjacent tiles
-        for (let x=-1; x<=1; x++) {
-            for (let y=-1; y<=1; y++) {
-                const coordsOfAdjTile = vectorAdd(worldCoords, [x,y]);
-                const indexOfAdjTile = this.indexOf(coordsOfAdjTile);
-                if (indexOfAdjTile === -1) {
-                    const adjChunk = chunkStore.getChunk(coordsOfAdjTile);
-                    if (adjChunk) {
-                        const adjIndex = adjChunk.indexOf(coordsOfAdjTile);
-                        adjChunk.tiles[adjIndex] += 1;
-                    }
-                } else {
-                    this.tiles[indexOfAdjTile] += 1;
+        forEachNeighbour(worldCoords, (coordsOfAdjTile) => {
+            const indexOfAdjTile = this.indexOf(coordsOfAdjTile);
+            if (indexOfAdjTile === -1) {
+                const adjChunk = chunkStore.getChunk(coordsOfAdjTile);
+                if (adjChunk) {
+                    const adjIndex = adjChunk.indexOf(coordsOfAdjTile);
+                    adjChunk.tiles[adjIndex] += 1;
                 }
+            } else {
+                this.tiles[indexOfAdjTile] += 1;
             }
-        }
+        });
     }
 
     reveal(worldCoords, world) {
@@ -98,15 +99,12 @@ export class Chunk {
         this.tiles[index] += Revealed;
 
         if (adjacent(this.tiles[index]) === 0) {
-            for (let x = -1; x <= 1; x++) {
-                for (let y = -1; y <= 1; y++) {
-                    const adjacentCoords = vectorAdd(worldCoords, [x,y]);
-                    const adjacentTile = this.getTile(adjacentCoords);
-                    if (!revealed(adjacentTile)) {
-                        this.reveal(adjacentCoords, world);
-                    }
+            forEachNeighbour(worldCoords, (adjacentCoords) => {
+                const adjacentTile = this.getTile(adjacentCoords);
+                if (!revealed(adjacentTile)) {
+                    this.reveal(adjacentCoords, world);
                 }
-            }
+            });
         }
         else {
         }
