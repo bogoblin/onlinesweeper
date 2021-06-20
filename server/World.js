@@ -13,9 +13,14 @@ export class World {
         this.revealQueue = [];
     }
 
+    addChunk(chunk) {
+        this.chunks.addChunk(chunk);
+        this.messageSender.sendToAll(chunk);
+        console.log(`Added chunk ${chunk.coords}`)
+    }
+
     runUserMessage(username, message) {
         const {operation, worldCoords} = message;
-        let chunk = this.chunks.getChunk(worldCoords);
         switch (operation) {
             case Operation.Click:
                 this.reveal(worldCoords);
