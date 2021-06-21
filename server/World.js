@@ -36,6 +36,10 @@ export class World {
         console.log(`Added chunk ${chunk.coords}`)
     }
 
+    /**
+     * @param player {Player}
+     * @param worldCoords {number[]}
+     */
     reveal(player, worldCoords) {
         this.queueReveal(worldCoords);
         this.handleRevealQueue();
@@ -76,6 +80,10 @@ export class World {
         }
     }
 
+    /**
+     * @param player {Player}
+     * @param worldCoords {number[]}
+     */
     flag(player, worldCoords) {
         let chunk = this.chunks.getChunk(worldCoords);
         if (chunk) {
@@ -84,6 +92,10 @@ export class World {
         }
     }
 
+    /**
+     * @param player {Player}
+     * @param worldCoords {number[]}
+     */
     doubleClick(player, worldCoords) {
         const coords = vectorFloor(worldCoords);
         console.log(`double click ${coords}`)
@@ -118,8 +130,12 @@ export class World {
         }
     }
 
+    /**
+     * @param player {Player}
+     * @param worldCoords {number[]}
+     */
     move(player, worldCoords) {
-
+        player.move(worldCoords);
     }
 
     greet(player) {
