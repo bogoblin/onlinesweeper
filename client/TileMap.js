@@ -74,12 +74,10 @@ class TileMap {
     }
 
     /**
-     *
-     * @param worldTopLeft {[number, number]}
-     * @param chunk {number[]}
+     * chunk {Chunk}
      */
-    addChunk(worldTopLeft, chunk) {
-        this.chunks.addChunk(new Chunk(worldTopLeft, chunk));
+    addChunk(chunk) {
+        this.chunks.addChunk(chunk);
     }
 
     updateTile(worldCoords, tileId) {

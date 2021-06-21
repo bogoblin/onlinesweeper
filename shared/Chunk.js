@@ -1,4 +1,4 @@
-import {forEachNeighbour, vectorAdd, vectorFloor} from "./Vector2.js";
+import {forEachNeighbour, vectorAdd} from "./Vector2.js";
 import {adjacent, Flag, flag, Mine, mine, publicVersion, revealed, Revealed} from "./Tile.js";
 
 export const chunkSize = 16;
@@ -150,22 +150,23 @@ export class Chunk {
     }
 
     serialize() {
-        return 'h'+JSON.stringify(this);
+        const coords = new Uint8Array(Int32Array.from(this.coords).buffer);
+        const tiles = this.tiles;
+        const data = new Uint8Array(8 + chunkSize*chunkSize);
+        data.set(coords, 0);
+        data.set(tiles, 8);
+        return data;
     }
 }
 
 /**
- * @param data {string}
+ * @param data {Uint8Array}
  */
 export const chunkDeserialize = (data) => {
-    const chunk = JSON.parse(data.substring(1));
-    const coords = chunk.coords;
-    const chunkArray = new Uint8Array(chunkSize*chunkSize);
-    for (let i=0; i<chunkSize*chunkSize; i++) {
-        chunkArray[i] = chunk.tiles[i];
-    }
+    const tiles = data.slice(8);
+    const coords = new Int32Array(data.slice(0,8).buffer);
 
-    return new Chunk(coords, chunkArray);
+    return new Chunk(Array.of(...coords), tiles);
 }
 
 export const chunkCoords = ([x,y]) => {

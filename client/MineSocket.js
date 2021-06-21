@@ -4,7 +4,8 @@ import {
 
 import {chunkDeserialize, chunkSize} from '../shared/Chunk';
 import {readCoords} from "../shared/SerializeUtils";
-import {coordsMessage, loginMessage, Operation, UserMessage} from "../shared/UserMessage";
+import * as UserMessage from "../shared/UserMessage";
+import * as ServerMessage from "../shared/ServerMessage";
 class MineSocket {
     /**
      * @param socket {WebSocket}
@@ -26,47 +27,43 @@ class MineSocket {
     }
 
     sendClickMessage(coords) { // c for click
-        this.socket.send(coordsMessage(Operation.Click, coords).serialize());
+        this.socket.send(UserMessage.coordsMessage(UserMessage.Operation.Click, coords).serialize());
     }
 
     sendFlagMessage(coords) { // f for flag
-        this.socket.send(coordsMessage(Operation.Flag, coords).serialize());
+        this.socket.send(UserMessage.coordsMessage(UserMessage.Operation.Flag, coords).serialize());
     }
 
     sendDoubleClickMessage(coords) { // d for double click
-        this.socket.send(coordsMessage(Operation.DoubleClick, coords).serialize());
+        this.socket.send(UserMessage.coordsMessage(UserMessage.Operation.DoubleClick, coords).serialize());
     }
 
     sendMoveMessage(coords) { // m for move
-        this.socket.send(coordsMessage(Operation.Move, coords).serialize());
+        this.socket.send(UserMessage.coordsMessage(UserMessage.Operation.Move, coords).serialize());
     }
 
     sendLoginMessage(username, password) {
-        this.socket.send(loginMessage(username, password).serialize());
+        this.socket.send(UserMessage.loginMessage(username, password).serialize());
     }
 
     /**
      * @param ev {MessageEvent}
      */
     receiveMessage(ev) {
-        const data = ev.data.toString();
-        if (data) {
-            const leaderChar = data.charAt(0);
-            switch (leaderChar) {
-                case 'h': { // cHunk
-                    const chunk = chunkDeserialize(data);
-                    console.log(chunk)
-                    console.log('hello')
-
-                    this.tileMap.addChunk(chunk.coords, chunk.tiles);
-                } break;
-                case 't': { // Tile update
-                    const newValue = data.charCodeAt(1) - 0x21;
-                    const coords = readCoords(data, 2);
-                    this.tileMap.updateTile(coords, newValue);
-                } break;
-            }
-        }
+        new Response(ev.data).arrayBuffer()
+            .then(a => {
+                console.log(a);
+                const data = new Uint8Array(a);
+                console.log(data);
+                const message = ServerMessage.serverMessageDeserialize(data);
+                console.log(message);
+                switch (message.operation) {
+                    case ServerMessage.Operation.Chunk:
+                        const chunk = message.content;
+                        console.log(chunk);
+                        this.tileMap.addChunk(chunk);
+                }
+            })
     }
 
 }

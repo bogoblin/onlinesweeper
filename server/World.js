@@ -3,6 +3,7 @@ import {Chunk, chunkSize} from "../shared/Chunk.js";
 import {forEachInRect, forEachNeighbour, vectorFloor} from "../shared/Vector2.js";
 import {adjacent, mine, revealed, tileInfo} from "../shared/Tile.js";
 import {Player} from "../shared/Player.js";
+import {Operation, ServerMessage} from "../shared/ServerMessage.js";
 
 export class World {
     constructor() {
@@ -31,7 +32,7 @@ export class World {
     addChunk(chunk) {
         this.chunks.addChunk(chunk);
         if (this.messageSender) {
-            this.messageSender.sendToAll(chunk);
+            this.messageSender.sendToAll(new ServerMessage(Operation.Chunk, chunk));
         }
         console.log(`Added chunk ${chunk.coords}`)
     }
@@ -76,7 +77,7 @@ export class World {
         }
 
         for (let chunk of chunksUpdated) {
-            this.messageSender.sendToAll(chunk);
+            this.messageSender.sendToAll(new ServerMessage(Operation.Chunk, chunk));
         }
     }
 
@@ -88,7 +89,7 @@ export class World {
         let chunk = this.chunks.getChunk(worldCoords);
         if (chunk) {
             chunk.flag(worldCoords);
-            this.messageSender.sendToAll(chunk);
+            this.messageSender.sendToAll(new ServerMessage(Operation.Chunk, chunk));
         }
     }
 
@@ -101,7 +102,7 @@ export class World {
         console.log(`double click ${coords}`)
         const tile = this.chunks.getTile(coords);
         if (!revealed(tile)) {
-            this.queueReveal(coords);
+            this.reveal(player, worldCoords);
             return;
         }
         if (mine(tile)) {
@@ -128,6 +129,8 @@ export class World {
                 this.queueReveal(t);
             }
         }
+
+        this.handleRevealQueue();
     }
 
     /**
@@ -140,7 +143,7 @@ export class World {
 
     greet(player) {
         for (let chunk of Object.values(this.chunks.chunks)) {
-            player.send(chunk);
+            player.send(new ServerMessage(Operation.Chunk, chunk));
         }
     }
 

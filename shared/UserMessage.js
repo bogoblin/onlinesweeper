@@ -1,4 +1,3 @@
-import {readCoords} from "./SerializeUtils.js";
 import {vectorFloor} from "./Vector2.js";
 
 export const Operation = {

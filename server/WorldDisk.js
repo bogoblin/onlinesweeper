@@ -52,12 +52,11 @@ export class WorldDisk {
 
     async readChunk(path) {
         return new Promise((resolve, reject) => {
-            fs.readFile(path, (err, d) => {
+            fs.readFile(path, (err, data) => {
                 if (err) {
                     reject(err);
                 }
                 try {
-                    const data = d.toString('ascii');
                     const chunk = chunkDeserialize(data);
                     this.world.addChunk(chunk);
                     resolve();

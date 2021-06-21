@@ -19,7 +19,7 @@ export class Player {
         this.position = newPosition;
     }
 
-    send(serializable) {
-        this.socket.send(serializable.publicSerialize());
+    send(serverMessage) {
+        this.socket.send(serverMessage.serialize());
     }
 }

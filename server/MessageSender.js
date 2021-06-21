@@ -66,11 +66,9 @@ export class MessageSender {
         });
     }
 
-    sendToAll(serializable) {
-        const data = serializable.publicSerialize();
+    sendToAll(message) {
         for (let player of Object.values(this.connectedPlayers)) {
-            const socket = player.socket;
-            socket.send(data);
+            player.send(message);
         }
     }
 }

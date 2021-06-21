@@ -11,7 +11,7 @@ test('Default chunk serializes and deserializes properly', () => {
 });
 
 test('Random chunk serializes and deserializes properly', () => {
-    const c = new Chunk([0,0]);
+    const c = new Chunk([(Math.random()-0.5)*2000000000,(Math.random()-0.5)*2000000000]);
     for (let i=0; i<c.tiles.length; i++) {
         c.tiles[i] = Math.floor(Math.random()*256);
     }
