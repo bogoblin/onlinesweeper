@@ -2,9 +2,12 @@ import {chunkDeserialize} from "./Chunk.js";
 
 export const Operation = {
     Chunk: 'h',
-    Tile: 't',
-    Welcome: 'w'
+    General: '/'
 };
+
+export const GeneralMessages = {
+    Welcome: 'w'
+}
 
 export class ServerMessage {
     constructor(operation, serializable) {
@@ -21,6 +24,30 @@ export class ServerMessage {
     }
 }
 
+const encoder = new TextEncoder();
+const decoder = new TextDecoder();
+
+export class GeneralMessage {
+    constructor(message) {
+        this.message = message;
+    }
+
+    serialize() {
+        return encoder.encode(JSON.stringify(this.message));
+    }
+
+    publicSerialize() {
+        return this.serialize();
+    }
+}
+
+export const welcome = (coords) => {
+    return new GeneralMessage({
+        messageType: GeneralMessages.Welcome,
+        coords
+    });
+}
+
 /**
  *
  * @param data {Uint8Array}
@@ -31,6 +58,8 @@ export const serverMessageDeserialize = (data) => {
     switch (leader) {
         case Operation.Chunk:
             return new ServerMessage(Operation.Chunk, chunkDeserialize(serialized));
+        case Operation.General:
+            return new ServerMessage(Operation.General, JSON.parse(decoder.decode(serialized)));
         default:
     }
 }

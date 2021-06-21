@@ -6,6 +6,7 @@ import {chunkDeserialize, chunkSize} from '../shared/Chunk';
 import {readCoords} from "../shared/SerializeUtils";
 import * as UserMessage from "../shared/UserMessage";
 import * as ServerMessage from "../shared/ServerMessage";
+import {GeneralMessages} from "../shared/ServerMessage";
 class MineSocket {
     /**
      * @param socket {WebSocket}
@@ -52,16 +53,23 @@ class MineSocket {
     receiveMessage(ev) {
         new Response(ev.data).arrayBuffer()
             .then(a => {
-                console.log(a);
                 const data = new Uint8Array(a);
-                console.log(data);
                 const message = ServerMessage.serverMessageDeserialize(data);
-                console.log(message);
                 switch (message.operation) {
                     case ServerMessage.Operation.Chunk:
                         const chunk = message.content;
-                        console.log(chunk);
                         this.tileMap.addChunk(chunk);
+                        break;
+                    case ServerMessage.Operation.General:
+                        console.log(message.content);
+                        const general = message.content;
+                        switch (general.messageType) {
+                            case GeneralMessages.Welcome:
+                                this.tileView.viewCenter = general.coords;
+                                break;
+                            default:
+                        }
+                        break;
                 }
             })
     }

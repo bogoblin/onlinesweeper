@@ -3,7 +3,7 @@ import {Chunk, chunkSize} from "../shared/Chunk.js";
 import {forEachInRect, forEachNeighbour, vectorFloor} from "../shared/Vector2.js";
 import {adjacent, mine, revealed, tileInfo} from "../shared/Tile.js";
 import {Player} from "../shared/Player.js";
-import {Operation, ServerMessage} from "../shared/ServerMessage.js";
+import {GeneralMessage, Operation, ServerMessage, welcome} from "../shared/ServerMessage.js";
 
 export class World {
     constructor() {
@@ -145,6 +145,8 @@ export class World {
         for (let chunk of Object.values(this.chunks.chunks)) {
             player.send(new ServerMessage(Operation.Chunk, chunk));
         }
+
+        player.send(new ServerMessage(Operation.General, welcome(player.position)));
     }
 
     generateChunk(worldCoords, difficulty) {

@@ -20,6 +20,6 @@ export class Player {
     }
 
     send(serverMessage) {
-        this.socket.send(serverMessage.serialize());
+        this.socket.send(serverMessage.serialize(false));
     }
 }

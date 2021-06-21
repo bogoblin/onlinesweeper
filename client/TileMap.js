@@ -52,15 +52,15 @@ class TileMap {
         }
     }
 
-    doubleClickTime = 1000; // milliseconds
+    doubleClickTime = 600; // milliseconds
     click(worldCoords) {
+        console.log(`Clicked at ${worldCoords}`);
         const now = performance.now();
         if (this.socket) {
             if (now - this.lastClicked < this.doubleClickTime) {
                 this.socket.sendDoubleClickMessage(worldCoords);
             }
             else {
-                console.log(`${now} - ${this.lastClicked} = ${now - this.lastClicked}`)
                 this.socket.sendClickMessage(worldCoords);
             }
         }
