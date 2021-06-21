@@ -22,4 +22,5 @@ const tileView = new TileView(canvas, 16, tileMap);
 const ws = new WebSocket("ws://localhost:8081");
 ws.onopen = () => {
     const mineSocket = new MineSocket(ws, tileMap, tileView);
+    mineSocket.sendLoginMessage('bobby', '1234');
 }

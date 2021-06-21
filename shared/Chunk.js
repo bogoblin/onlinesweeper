@@ -86,10 +86,15 @@ export class Chunk {
         });
     }
 
+    /**
+     *
+     * @param worldCoords {number[]}
+     * @param world {World}
+     */
     reveal(worldCoords, world) {
         const index = this.indexOf(worldCoords);
         if (index === -1) {
-            world.reveal(worldCoords);
+            world.queueReveal(worldCoords);
             return;
         }
 

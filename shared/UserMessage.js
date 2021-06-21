@@ -6,7 +6,7 @@ export const Operation = {
     Flag: 'f',
     DoubleClick: 'd',
     Move: 'm',
-    Join: 'j'
+    Login: 'l'
 };
 
 export class UserMessage {
@@ -26,5 +26,12 @@ export const coordsMessage = (operation, coords) => {
     return new UserMessage({
         operation: operation,
         worldCoords: vectorFloor(coords)
+    });
+}
+
+export const loginMessage = (username, password) => {
+    return new UserMessage({
+        operation: Operation.Login,
+        username, password
     });
 }

@@ -4,7 +4,7 @@ import {
 
 import {chunkDeserialize, chunkSize} from '../shared/Chunk';
 import {readCoords} from "../shared/SerializeUtils";
-import {coordsMessage, Operation, UserMessage} from "../shared/UserMessage";
+import {coordsMessage, loginMessage, Operation, UserMessage} from "../shared/UserMessage";
 class MineSocket {
     /**
      * @param socket {WebSocket}
@@ -39,6 +39,10 @@ class MineSocket {
 
     sendMoveMessage(coords) { // m for move
         this.socket.send(coordsMessage(Operation.Move, coords).serialize());
+    }
+
+    sendLoginMessage(username, password) {
+        this.socket.send(loginMessage(username, password).serialize());
     }
 
     /**

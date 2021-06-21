@@ -1,12 +1,13 @@
 import {ChunkStore} from "../shared/ChunkStore.js";
-import {Operation} from "../shared/UserMessage.js";
 import {Chunk, chunkSize} from "../shared/Chunk.js";
-import {forEachInRect, forEachNeighbour, vectorAdd, vectorFloor, vectorTimesScalar} from "../shared/Vector2.js";
+import {forEachInRect, forEachNeighbour, vectorFloor} from "../shared/Vector2.js";
 import {adjacent, mine, revealed, tileInfo} from "../shared/Tile.js";
+import {Player} from "../shared/Player.js";
 
 export class World {
     constructor() {
         this.chunks = new ChunkStore();
+        this.players = {};
 
         this.revealQueue = [];
     }
@@ -14,6 +15,17 @@ export class World {
     setMessageSender(messageSender) {
         this.messageSender = messageSender;
         messageSender.world = this;
+    }
+
+    getPlayer(username) {
+        return this.players[username];
+    }
+
+    addPlayer(username, hashedPassword) {
+        if (!this.getPlayer(username)) {
+            this.players[username] = new Player(username, hashedPassword);
+        }
+        return this.getPlayer(username);
     }
 
     addChunk(chunk) {
@@ -24,27 +36,13 @@ export class World {
         console.log(`Added chunk ${chunk.coords}`)
     }
 
-    runUserMessage(username, message) {
-        const operation = message.operation;
-        switch (operation) {
-            case Operation.Click:
-                this.reveal(message.worldCoords);
-                break;
-            case Operation.Flag:
-                this.flag(message.worldCoords);
-                break;
-            case Operation.DoubleClick:
-                this.doubleClick(message.worldCoords);
-                break;
-            default:
-                break;
-        }
-
+    reveal(player, worldCoords) {
+        this.queueReveal(worldCoords);
         this.handleRevealQueue();
     }
 
     // Add to reveal queue
-    reveal(worldCoords) {
+    queueReveal(worldCoords) {
         const coords = vectorFloor(worldCoords);
         console.log(`Added ${coords} to queue`)
         this.revealQueue.push(coords);
@@ -78,7 +76,7 @@ export class World {
         }
     }
 
-    flag(worldCoords) {
+    flag(player, worldCoords) {
         let chunk = this.chunks.getChunk(worldCoords);
         if (chunk) {
             chunk.flag(worldCoords);
@@ -86,12 +84,12 @@ export class World {
         }
     }
 
-    doubleClick(worldCoords) {
+    doubleClick(player, worldCoords) {
         const coords = vectorFloor(worldCoords);
         console.log(`double click ${coords}`)
         const tile = this.chunks.getTile(coords);
         if (!revealed(tile)) {
-            this.reveal(coords);
+            this.queueReveal(coords);
             return;
         }
         if (mine(tile)) {
@@ -115,14 +113,18 @@ export class World {
         if (adjacent(tile) === knownAdjacentMines) {
             // reveal all adjacent tiles that aren't flagged
             for (let t of revealCandidates) {
-                this.reveal(t);
+                this.queueReveal(t);
             }
         }
     }
 
-    greet(username) {
+    move(player, worldCoords) {
+
+    }
+
+    greet(player) {
         for (let chunk of Object.values(this.chunks.chunks)) {
-            this.messageSender.sendToPlayer(username, chunk);
+            player.send(chunk);
         }
     }
 
