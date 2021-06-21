@@ -4,7 +4,7 @@ import {
 
 import {chunkDeserialize, chunkSize} from '../shared/Chunk';
 import {readCoords} from "../shared/SerializeUtils";
-import {Operation, UserMessage} from "../shared/UserMessage";
+import {coordsMessage, Operation, UserMessage} from "../shared/UserMessage";
 class MineSocket {
     /**
      * @param socket {WebSocket}
@@ -23,24 +23,22 @@ class MineSocket {
             console.log(ev);
             this.receiveMessage(ev);
         }
-
-        this.socket.send("asdf");
     }
 
     sendClickMessage(coords) { // c for click
-        this.socket.send(new UserMessage(Operation.Click, coords).serialize());
+        this.socket.send(coordsMessage(Operation.Click, coords).serialize());
     }
 
     sendFlagMessage(coords) { // f for flag
-        this.socket.send(new UserMessage(Operation.Flag, coords).serialize());
+        this.socket.send(coordsMessage(Operation.Flag, coords).serialize());
     }
 
     sendDoubleClickMessage(coords) { // d for double click
-        this.socket.send(new UserMessage(Operation.DoubleClick, coords).serialize());
+        this.socket.send(coordsMessage(Operation.DoubleClick, coords).serialize());
     }
 
     sendMoveMessage(coords) { // m for move
-        this.socket.send(new UserMessage(Operation.Move, coords).serialize());
+        this.socket.send(coordsMessage(Operation.Move, coords).serialize());
     }
 
     /**

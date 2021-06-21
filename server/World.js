@@ -1,7 +1,7 @@
 import {ChunkStore} from "../shared/ChunkStore.js";
 import {Operation} from "../shared/UserMessage.js";
 import {Chunk, chunkSize} from "../shared/Chunk.js";
-import {forEachInRect, forEachNeighbour, vectorAdd, vectorTimesScalar} from "../shared/Vector2.js";
+import {forEachInRect, forEachNeighbour, vectorAdd, vectorFloor, vectorTimesScalar} from "../shared/Vector2.js";
 import {adjacent, mine, revealed, tileInfo} from "../shared/Tile.js";
 
 export class World {
@@ -25,16 +25,16 @@ export class World {
     }
 
     runUserMessage(username, message) {
-        const {operation, worldCoords} = message;
+        const operation = message.operation;
         switch (operation) {
             case Operation.Click:
-                this.reveal(worldCoords);
+                this.reveal(message.worldCoords);
                 break;
             case Operation.Flag:
-                this.flag(worldCoords);
+                this.flag(message.worldCoords);
                 break;
             case Operation.DoubleClick:
-                this.doubleClick(worldCoords);
+                this.doubleClick(message.worldCoords);
                 break;
             default:
                 break;
@@ -45,8 +45,9 @@ export class World {
 
     // Add to reveal queue
     reveal(worldCoords) {
-        console.log(`Added ${worldCoords} to queue`)
-        this.revealQueue.push(worldCoords);
+        const coords = vectorFloor(worldCoords);
+        console.log(`Added ${coords} to queue`)
+        this.revealQueue.push(coords);
     }
 
     handleRevealQueue() {
@@ -86,10 +87,11 @@ export class World {
     }
 
     doubleClick(worldCoords) {
-        console.log(`double click ${worldCoords}`)
-        const tile = this.chunks.getTile(worldCoords);
+        const coords = vectorFloor(worldCoords);
+        console.log(`double click ${coords}`)
+        const tile = this.chunks.getTile(coords);
         if (!revealed(tile)) {
-            this.reveal(worldCoords);
+            this.reveal(coords);
             return;
         }
         if (mine(tile)) {
@@ -99,7 +101,7 @@ export class World {
         let knownAdjacentMines = 0;
         const revealCandidates = []; // tiles to reveal if double clicking is valid
 
-        forEachNeighbour(worldCoords, (adjTileCoords) => {
+        forEachNeighbour(coords, (adjTileCoords) => {
             const adjTile = this.chunks.getTile(adjTileCoords);
             const info = tileInfo(adjTile);
             if (info.revealed && info.mine) { // take into account revealed mines as well as flags
@@ -131,17 +133,17 @@ export class World {
         const newChunk = new Chunk(worldCoords);
         console.log(`Generating new chunk at ${newChunk.coords}`);
 
-        const chunkRect = [newChunk.topLeft(), newChunk.bottomRight()];
+        const chunkRect = newChunk.rect();
 
-        // Get adjacency from existing chunks
+        // Get adjacency from existing chunks - check each tile in the chunk
         forEachInRect(chunkRect, (tileCoords) => {
             let adj = 0;
-            // offsets
             forEachNeighbour(tileCoords, (coords) => {
                 // if we're checking within the new chunk, there won't be any mines there
+                // because we haven't placed them yet
                 if (newChunk.indexOf(coords) !== -1) return;
 
-                // otherwise:
+                // otherwise count the mines from the existing chunk
                 const cornerChunk = this.chunks.getChunk(coords);
                 if (cornerChunk) {
                     adj += mine(cornerChunk.getTile(coords));
@@ -150,9 +152,9 @@ export class World {
             newChunk.updateTile(tileCoords, adj);
         });
 
-        // Add mines
+        // Add mines to new chunk
         forEachInRect(chunkRect, (mineCoords) => {
-            if (Math.random() < difficulty) {
+            if (Math.random() < difficulty) { // There is a difficulty/1 chance of each tile being a mine
                 newChunk.addMine(mineCoords, this.chunks);
             }
         })

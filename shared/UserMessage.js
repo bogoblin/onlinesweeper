@@ -1,26 +1,30 @@
 import {readCoords} from "./SerializeUtils.js";
+import {vectorFloor} from "./Vector2.js";
 
 export const Operation = {
     Click: 'c',
     Flag: 'f',
     DoubleClick: 'd',
-    Move: 'm'
+    Move: 'm',
+    Join: 'j'
 };
 
 export class UserMessage {
-    constructor(operation, worldCoords) {
-        this.operation = operation;
-        this.worldCoords = worldCoords.map(c => Math.floor(c));
+    constructor(message) {
+        this.message = message;
     }
 
     serialize() {
-        const [x, y] = this.worldCoords;
-        return `${this.operation}${x},${y}`;
+        return JSON.stringify(this.message);
     }
 }
 export const userMessageDeserialize = (d) => {
-    const data = d.toString();
-    const operation = data.charAt(0);
-    const coords = readCoords(data, 1);
-    return new UserMessage(operation, coords);
+    return JSON.parse(d);
+}
+
+export const coordsMessage = (operation, coords) => {
+    return new UserMessage({
+        operation: operation,
+        worldCoords: vectorFloor(coords)
+    });
 }

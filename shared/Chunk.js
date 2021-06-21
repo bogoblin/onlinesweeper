@@ -1,4 +1,4 @@
-import {forEachNeighbour, vectorAdd} from "./Vector2.js";
+import {forEachNeighbour, vectorAdd, vectorFloor} from "./Vector2.js";
 import {adjacent, Flag, flag, Mine, mine, publicVersion, revealed, Revealed} from "./Tile.js";
 
 export const chunkSize = 16;
@@ -29,8 +29,8 @@ export class Chunk {
      * @returns {number} the index for the tiles array for this coordinate. Returns -1 if the coordinate is not in this chunk.
      */
     indexOf(worldCoords) {
-        const row = worldCoords[1] - this.coords[1];
-        const col = worldCoords[0] - this.coords[0];
+        const row = Math.floor(worldCoords[1]) - this.coords[1];
+        const col = Math.floor(worldCoords[0]) - this.coords[0];
         if (row >= chunkSize || col >= chunkSize || row < 0 || col < 0) {
             return -1;
         }

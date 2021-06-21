@@ -32,6 +32,10 @@ export const vectorMagnitudeSquared = (v1) => {
     return result;
 }
 
+export const vectorFloor = (v1) => {
+    return v1.map(v => Math.floor(v));
+}
+
 /**
  * Iterates over the coordinates in a given rectangle, in writing order.
  * @param topLeft
