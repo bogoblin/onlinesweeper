@@ -1,9 +1,3 @@
-import {
-    vectorTimesScalar, vectorSub, vectorMagnitudeSquared, vectorAdd
-} from '../shared/Vector2';
-
-import {chunkDeserialize, chunkSize} from '../shared/Chunk';
-import {readCoords} from "../shared/SerializeUtils";
 import * as UserMessage from "../shared/UserMessage";
 import * as ServerMessage from "../shared/ServerMessage";
 import {GeneralMessages} from "../shared/ServerMessage";
@@ -22,7 +16,6 @@ class MineSocket {
         tileView.socket = this;
 
         this.socket.onmessage = (ev) => {
-            console.log(ev);
             this.receiveMessage(ev);
         }
     }
@@ -61,7 +54,6 @@ class MineSocket {
                         this.tileMap.addChunk(chunk);
                         break;
                     case ServerMessage.Operation.General:
-                        console.log(message.content);
                         const general = message.content;
                         switch (general.messageType) {
                             case GeneralMessages.Welcome:

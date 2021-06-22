@@ -1,6 +1,4 @@
-import {
-    vectorTimesScalar, vectorSub, vectorMagnitudeSquared, vectorAdd
-} from '../shared/Vector2'
+import { vectorTimesScalar, vectorSub, vectorMagnitudeSquared, vectorAdd } from '../shared/Vector2'
 
 class TileView {
     /**

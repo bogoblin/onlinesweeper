@@ -3,7 +3,7 @@ import {Chunk, chunkSize} from "../shared/Chunk.js";
 import {forEachInRect, forEachNeighbour, vectorFloor} from "../shared/Vector2.js";
 import {adjacent, mine, revealed, tileInfo} from "../shared/Tile.js";
 import {Player} from "../shared/Player.js";
-import {GeneralMessage, Operation, ServerMessage, welcome} from "../shared/ServerMessage.js";
+import {Operation, ServerMessage, welcome} from "../shared/ServerMessage.js";
 
 export class World {
     constructor() {

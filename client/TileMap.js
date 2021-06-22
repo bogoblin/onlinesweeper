@@ -1,4 +1,4 @@
-import {Chunk, chunkCoords, chunkSize, defaultChunk} from "../shared/Chunk";
+import {chunkCoords, chunkSize, defaultChunk} from "../shared/Chunk";
 import {ChunkStore} from "../shared/ChunkStore";
 import {drawChunkCanvas} from "./TileGraphics";
 
