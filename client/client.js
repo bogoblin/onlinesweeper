@@ -1,14 +1,18 @@
-import TileMap from './TileMap.js';
-import TileView from './TileView.js';
-import MineSocket from './MineSocket.js';
+import {MineSocket} from './MineSocket.js';
+import {App} from "./components/MineApp.js";
+import * as React from "react";
+import ReactDOM from "react-dom";
 
-const canvas = document.createElement('canvas');
-document.body.appendChild(canvas);
-const tileMap = new TileMap();
-const tileView = new TileView(canvas, 16, tileMap);
+const mineSocket = new MineSocket("ws://localhost:8081");
+// .connect()
+//     .then((minesocket) => {
+//         minesocket.sendloginmessage('bobby', '1234');
+//         // document.body.append(minesocket.tileview.canvas);
+//     })
+//     .catch((err) => {
+//         console.log(err);
+//     });
 
-const ws = new WebSocket("ws://localhost:8081");
-ws.onopen = () => {
-    const mineSocket = new MineSocket(ws, tileMap, tileView);
-    mineSocket.sendLoginMessage('bobby', '1234');
-}
+const root = document.createElement('div');
+document.body.append(root);
+ReactDOM.render(<App mineSocket={mineSocket}/>, root);

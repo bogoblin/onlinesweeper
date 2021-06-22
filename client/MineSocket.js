@@ -1,23 +1,35 @@
 import * as UserMessage from "../shared/UserMessage.js";
 import * as ServerMessage from "../shared/ServerMessage.js";
 import {GeneralMessages} from "../shared/ServerMessage.js";
-class MineSocket {
-    /**
-     * @param socket {WebSocket}
-     * @param tileMap {TileMap}
-     * @param tileView {TileView}
-     */
-    constructor(socket, tileMap, tileView) {
-        this.socket = socket;
-        this.tileMap = tileMap;
-        this.tileView = tileView;
+import TileMap from "./TileMap.js";
+import TileView from "./TileView.js";
+import {tileSize} from "./TileGraphics.js";
+export class MineSocket {
+    constructor(url) {
+        this.socket = new WebSocket(url);
+        this.tileMap = new TileMap();
+        this.tileView = new TileView(tileSize, this.tileMap);
 
-        tileMap.socket = this;
-        tileView.socket = this;
+        this.tileMap.socket = this;
+        this.tileView.socket = this;
 
         this.socket.onmessage = (ev) => {
             this.receiveMessage(ev);
         }
+
+        this.connectPromise = new Promise((resolve, reject) => {
+            console.log('running the promise');
+            this.socket.addEventListener('open', () => {
+                resolve(this);
+            });
+            this.socket.addEventListener('error', (err) => {
+                reject(err);
+            });
+        });
+    }
+
+    async connect() {
+        return this.connectPromise;
     }
 
     sendClickMessage(coords) { // c for click
@@ -67,4 +79,3 @@ class MineSocket {
     }
 
 }
-export default MineSocket;

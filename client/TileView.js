@@ -2,22 +2,16 @@ import { vectorTimesScalar, vectorSub, vectorMagnitudeSquared, vectorAdd } from 
 
 class TileView {
     /**
-     * @param canvas {HTMLCanvasElement}
      * @param tileSize {number}
      * @param tileMap {TileMap}
      */
-    constructor( canvas, tileSize, tileMap ) {
-        this.canvas = canvas;
-        this.context = canvas.getContext('2d');
+    constructor( tileSize, tileMap ) {
         this.tileSize = tileSize;
         this.tileMap = tileMap;
 
         this.viewCenter = [0,0];
 
-        canvas.addEventListener('mousedown', this.clicked.bind(this));
-        canvas.addEventListener('mouseup', this.mouseUp.bind(this));
-        canvas.addEventListener('mousemove', this.mouseMove.bind(this));
-        canvas.oncontextmenu = () => false; // disable right click
+        this.setCanvas(document.createElement('canvas'));
 
         window.addEventListener("resize", () => {
             this.updateCanvasSize();
@@ -36,6 +30,21 @@ class TileView {
         this.socket = undefined;
     }
 
+    setCanvas(newCanvas) {
+        if (!newCanvas) {
+            return;
+        }
+        this.canvas = newCanvas;
+        this.context = this.canvas.getContext('2d');
+        this.canvas.addEventListener('mousedown', this.clicked.bind(this));
+        this.canvas.addEventListener('mouseup', this.mouseUp.bind(this));
+        this.canvas.addEventListener('mousemove', this.mouseMove.bind(this));
+        this.canvas.oncontextmenu = () => false; // disable right click
+
+        this.updateCanvasSize();
+        this.draw();
+    }
+
     updateCanvasSize() {
         this.canvas.width = window.innerWidth;
         this.canvas.height = window.innerHeight - 5;
@@ -47,7 +56,6 @@ class TileView {
      */
     clicked(event) {
         const screenCoords = [event.clientX, event.clientY];
-        const worldCoords = this.screenToWorld(screenCoords);
 
         this.drag.dragging = true;
         this.drag.dragStartScreen = screenCoords;
