@@ -16,15 +16,12 @@ class TileView {
         window.addEventListener("resize", () => {
             this.updateCanvasSize();
         });
-        this.updateCanvasSize();
 
         this.drag = {
             dragging: false,
             dragStartScreen: [0,0],
             viewCenterOnDragStart: [0,0]
         }
-
-        this.draw();
 
         // Set by MineSocket
         this.socket = undefined;
@@ -47,7 +44,14 @@ class TileView {
 
     updateCanvasSize() {
         this.canvas.width = window.innerWidth;
-        this.canvas.height = window.innerHeight - 5;
+        this.canvas.height = window.innerHeight;
+    }
+
+    getScreenCoords(event) {
+        const {left, top} = this.canvas.getBoundingClientRect();
+        const screenCoords = [event.clientX, event.clientY];
+
+        return vectorSub(screenCoords, [left, top]);
     }
 
     /**
@@ -55,7 +59,7 @@ class TileView {
      * @param event {MouseEvent}
      */
     clicked(event) {
-        const screenCoords = [event.clientX, event.clientY];
+        const screenCoords = this.getScreenCoords(event);
 
         this.drag.dragging = true;
         this.drag.dragStartScreen = screenCoords;
@@ -70,7 +74,7 @@ class TileView {
         if (this.drag.dragging) {
             this.drag.dragging = false;
 
-            const screenCoords = [event.clientX, event.clientY];
+            const screenCoords = this.getScreenCoords(event);
             const dragVector = vectorSub(this.drag.dragStartScreen, screenCoords);
             if (vectorMagnitudeSquared(dragVector) < 1) {
                 // Dragging hasn't happened, so we send a click to the tile map
@@ -99,7 +103,7 @@ class TileView {
      */
     mouseMove(event) {
         if (this.drag.dragging) {
-            const screenCoords = [event.clientX, event.clientY];
+            const screenCoords = this.getScreenCoords(event);
             const dragVector = vectorSub(this.drag.dragStartScreen, screenCoords);
             const dragVectorInWorldSpace = vectorTimesScalar(dragVector, 1/this.tileSize);
             this.viewCenter = vectorAdd(this.drag.viewCenterOnDragStart, dragVectorInWorldSpace);

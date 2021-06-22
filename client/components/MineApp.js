@@ -1,4 +1,5 @@
 import * as React from "react";
+import GameView from "./GameView.js";
 
 const AppStates = {
     Login: 'login',
@@ -14,14 +15,6 @@ export const App = ({mineSocket}) => {
 
     const initialPassword = localStorage.getItem('password') || '';
     const [password, setPassword] = React.useState(initialPassword);
-
-    const gameCanvas = React.useRef(null);
-
-    React.useEffect(() => {
-        mineSocket.tileView.setCanvas(gameCanvas.current);
-        console.log(mineSocket.tileView.canvas);
-        mineSocket.tileView.draw();
-    })
 
     const handleSubmit = () => {
         setState(AppStates.Loading);
@@ -55,7 +48,7 @@ export const App = ({mineSocket}) => {
         case AppStates.Loading:
             return <div>Loading...</div>
         case AppStates.Game:
-            return <canvas ref={gameCanvas}/>
+            return <GameView mineSocket={mineSocket}/>
     }
 
     return <br/>
