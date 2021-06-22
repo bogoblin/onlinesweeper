@@ -1,17 +1,9 @@
-import {chunkCoords, chunkSize, defaultChunk} from "../shared/Chunk";
-import {ChunkStore} from "../shared/ChunkStore";
-import {drawChunkCanvas} from "./TileGraphics";
+import {chunkCoords, chunkSize, defaultChunk} from "../shared/Chunk.js";
+import {ChunkStore} from "../shared/ChunkStore.js";
+import {drawChunkCanvas} from "./TileGraphics.js";
 
 class TileMap {
-    constructor( images ) {
-        // Load images
-        this.images = {};
-        for (let imageKey of Object.keys(images)) {
-            const img = new Image();
-            img.src = images[imageKey];
-            this.images[imageKey] = img;
-        }
-
+    constructor() {
         this.chunks = new ChunkStore();
 
         // To be set externally to a {MineSocket}

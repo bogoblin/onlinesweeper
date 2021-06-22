@@ -1,10 +1,10 @@
-import {AdjacencyMask, adjacent, flag, mine, Revealed, revealed} from "../shared/Tile.js";
-import {forEachInRect, vectorTimesScalar} from "../shared/Vector2";
-import {chunkSize} from "../shared/Chunk";
+import {adjacent, flag, mine, Revealed, revealed} from "../shared/Tile.js";
+import {forEachInRect, vectorTimesScalar} from "../shared/Vector2.js";
+import {chunkSize} from "../shared/Chunk.js";
 
 export const tileSize = 16;
 
-import spritesUrl from '../tiles.png';
+import spritesUrl from './tiles.png';
 const sprites = new Image();
 sprites.src = spritesUrl;
 

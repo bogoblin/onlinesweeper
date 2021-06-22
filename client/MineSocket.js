@@ -1,6 +1,6 @@
-import * as UserMessage from "../shared/UserMessage";
-import * as ServerMessage from "../shared/ServerMessage";
-import {GeneralMessages} from "../shared/ServerMessage";
+import * as UserMessage from "../shared/UserMessage.js";
+import * as ServerMessage from "../shared/ServerMessage.js";
+import {GeneralMessages} from "../shared/ServerMessage.js";
 class MineSocket {
     /**
      * @param socket {WebSocket}
