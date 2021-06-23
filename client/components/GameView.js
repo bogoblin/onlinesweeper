@@ -5,6 +5,12 @@ const canvasStyle = {
     padding: '0'
 }
 
+const panelStyle = {
+    position: 'absolute',
+    left: '5px',
+    top: '5px',
+}
+
 const GameView = ({mineSocket}) => {
     const gameCanvas = React.useRef();
 
@@ -12,7 +18,12 @@ const GameView = ({mineSocket}) => {
         mineSocket.tileView.setCanvas(gameCanvas.current);
     })
 
-    return <canvas ref={gameCanvas} style={canvasStyle}/>
+    return <div>
+        <canvas ref={gameCanvas} style={canvasStyle}/>
+        <div style={panelStyle}>
+            <button onClick={() => mineSocket.logOut()}>Log out</button>
+        </div>
+    </div>
 }
 
 export default GameView;

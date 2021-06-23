@@ -1,7 +1,7 @@
 import * as React from "react";
 import GameView from "./GameView.js";
 
-const AppStates = {
+export const AppStates = {
     Login: 'login',
     Loading: 'loading',
     Game: 'game'
@@ -16,16 +16,27 @@ export const App = ({mineSocket}) => {
     const initialPassword = localStorage.getItem('password') || '';
     const [password, setPassword] = React.useState(initialPassword);
 
+    mineSocket.onError = () => {
+        setState(AppStates.Login)
+    }
+    mineSocket.onWelcome = () => {
+        setState(AppStates.Game);
+
+        localStorage.setItem('username', username);
+        localStorage.setItem('password', password);
+    }
+    mineSocket.onLogout = () => {
+        localStorage.removeItem('username');
+        localStorage.removeItem('password');
+        setState(AppStates.Login);
+    }
+
     const handleSubmit = () => {
         setState(AppStates.Loading);
 
         mineSocket.connect()
             .then(() => {
                 mineSocket.sendLoginMessage(username, password);
-                setState(AppStates.Game);
-
-                localStorage.setItem('username', username);
-                localStorage.setItem('password', password);
             })
             .catch(err => {
                 setState(AppStates.Login)
@@ -44,6 +55,9 @@ export const App = ({mineSocket}) => {
                     <input type='password' value={password} onChange={event => setPassword(event.target.value)}/>
                     <input type='submit' value='Log in'/>
                 </form>
+                <div className='error'>
+                    {mineSocket.currentError}
+                </div>
             </div>
         case AppStates.Loading:
             return <div>Loading...</div>

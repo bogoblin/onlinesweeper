@@ -5,8 +5,18 @@ import TileMap from "./TileMap.js";
 import TileView from "./TileView.js";
 import {tileSize} from "./TileGraphics.js";
 export class MineSocket {
+    onError;
+    currentError;
+    onWelcome;
+    onLogout;
+
     constructor(url) {
-        this.socket = new WebSocket(url);
+        this.url = url;
+        this.reset();
+    }
+
+    reset() {
+        this.socket = new WebSocket(this.url);
         this.tileMap = new TileMap();
         this.tileView = new TileView(tileSize, this.tileMap);
 
@@ -60,6 +70,10 @@ export class MineSocket {
             .then(a => {
                 const data = new Uint8Array(a);
                 const message = ServerMessage.serverMessageDeserialize(data);
+                if (!message || !message.operation) {
+                    console.log(data);
+                    return;
+                }
                 switch (message.operation) {
                     case ServerMessage.Operation.Chunk:
                         const chunk = message.content;
@@ -70,7 +84,13 @@ export class MineSocket {
                         switch (general.messageType) {
                             case GeneralMessages.Welcome:
                                 this.tileView.viewCenter = general.coords;
+                                if (this.onWelcome) {
+                                    this.onWelcome();
+                                }
+                                this.currentError = null;
                                 break;
+                            case GeneralMessages.Error:
+                                this.error(general.err);
                             default:
                         }
                         break;
@@ -78,4 +98,18 @@ export class MineSocket {
             })
     }
 
+    error(err) {
+        this.currentError = err;
+        if (this.onError) {
+            this.onError();
+        }
+    }
+
+    logOut() {
+        this.socket.close(1000, 'Logging out');
+        if (this.onLogout) {
+            this.onLogout();
+        }
+        this.reset();
+    }
 }

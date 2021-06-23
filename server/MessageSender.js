@@ -1,4 +1,8 @@
 import {Operation, userMessageDeserialize} from "../shared/UserMessage.js";
+import * as sha256 from 'sha-256';
+import {error, serverGeneralMessage, ServerMessage} from "../shared/ServerMessage.js";
+
+const salt = process.env['salt'];
 
 export class MessageSender {
     world; // Set from World.js
@@ -12,20 +16,24 @@ export class MessageSender {
 
             socket.on('message', (m) => {
                 const message = userMessageDeserialize(m);
+                let player = socket.player;
                 switch (message.operation) {
                     case Operation.Login:
                         const {username, password} = message;
-                        if (username && password) {
-                            let player;
-                            // todo: auth
+                        if (!player && username && password) {
+                            const hashed = hashPassword(password);
                             const existingPlayer = this.world.getPlayer(username);
-                            if (existingPlayer) { // todo: security
-                                if (existingPlayer.hashedPassword === password) {
+                            if (existingPlayer) {
+                                if (existingPlayer.hashedPassword === hashed) {
                                     player = existingPlayer;
+                                } else {
+                                    socket.send(serverGeneralMessage(error(
+                                        `The password you entered doesn't match what we have for this username.`
+                                    )).serialize());
                                 }
                             } else {
                                 // create new player
-                                player = this.world.addPlayer(username, password); // todo: hash passwords
+                                player = this.world.addPlayer(username, hashed);
                             }
 
                             if (player) {
@@ -36,23 +44,23 @@ export class MessageSender {
                         }
                         break;
                     case Operation.Click:
-                        if (socket.player) {
-                            this.world.reveal(socket.player, message.worldCoords);
+                        if (player) {
+                            this.world.reveal(player, message.worldCoords);
                         }
                         break;
                     case Operation.Flag:
-                        if (socket.player) {
-                            this.world.flag(socket.player, message.worldCoords);
+                        if (player) {
+                            this.world.flag(player, message.worldCoords);
                         }
                         break;
                     case Operation.DoubleClick:
-                        if (socket.player) {
-                            this.world.doubleClick(socket.player, message.worldCoords);
+                        if (player) {
+                            this.world.doubleClick(player, message.worldCoords);
                         }
                         break;
                     case Operation.Move:
-                        if (socket.player) {
-                            this.world.move(socket.player, message.worldCoords);
+                        if (player) {
+                            this.world.move(player, message.worldCoords);
                         }
                         break;
                     default:
@@ -61,7 +69,9 @@ export class MessageSender {
             });
 
             socket.on('close', () => {
-                delete this.connectedPlayers[socket.username];
+                if (socket.player) {
+                    delete this.connectedPlayers[socket.player.username];
+                }
             });
         });
     }
@@ -72,3 +82,5 @@ export class MessageSender {
         }
     }
 }
+
+const hashPassword = password => sha256.hash(salt+password);

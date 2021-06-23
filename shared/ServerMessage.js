@@ -6,7 +6,8 @@ export const Operation = {
 };
 
 export const GeneralMessages = {
-    Welcome: 'w'
+    Welcome: 'w',
+    Error: 'e',
 }
 
 export class ServerMessage {
@@ -41,10 +42,21 @@ export class GeneralMessage {
     }
 }
 
+export const serverGeneralMessage = (generalMessage) => {
+    return new ServerMessage(Operation.General, generalMessage);
+}
+
 export const welcome = (coords) => {
     return new GeneralMessage({
         messageType: GeneralMessages.Welcome,
         coords
+    });
+}
+
+export const error = err => {
+    return new GeneralMessage({
+        messageType: GeneralMessages.Error,
+        err
     });
 }
 
@@ -55,6 +67,7 @@ export const welcome = (coords) => {
 export const serverMessageDeserialize = (data) => {
     const leader = String.fromCharCode(data[0]);
     const serialized = data.slice(1);
+    console.log(decoder.decode(serialized));
     switch (leader) {
         case Operation.Chunk:
             return new ServerMessage(Operation.Chunk, chunkDeserialize(serialized));
