@@ -67,7 +67,6 @@ export const error = err => {
 export const serverMessageDeserialize = (data) => {
     const leader = String.fromCharCode(data[0]);
     const serialized = data.slice(1);
-    console.log(decoder.decode(serialized));
     switch (leader) {
         case Operation.Chunk:
             return new ServerMessage(Operation.Chunk, chunkDeserialize(serialized));

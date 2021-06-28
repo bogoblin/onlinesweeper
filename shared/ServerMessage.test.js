@@ -11,7 +11,7 @@ test('Chunk serializes and deserializes properly', () => {
     const serialized = message.serialize(false);
     equals('h', String.fromCharCode(serialized[0]));
 
-    const deserialized = serverMessageDeserialize(serialized);
+    const deserialized = serverMessageDeserialize(serialized).content;
 
     equals(c, deserialized);
 })
