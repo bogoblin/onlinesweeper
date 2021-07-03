@@ -38,7 +38,10 @@ export const drawTileToCanvasContext = (context, canvasCoords, tile) => {
 
     const spriteIndex = getSpriteIndex(tile);
     const [x, y] = canvasCoords;
-    context.drawImage(sprites, spriteIndex * tileSize, 0, tileSize, tileSize, x, y, tileSize, tileSize);
+    context.drawImage(sprites, // source image
+        spriteIndex * tileSize, 0, tileSize, tileSize, // left, top, width and height of rectangle in source image
+        x, y, tileSize, tileSize // left, top, width and height of rectangle on the canvas
+    );
 
     if (debug) {
         context.strokeStyle = "2px solid red";

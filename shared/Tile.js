@@ -5,8 +5,12 @@ export const Mine = 1 << 4; // bit 4 = is there a mine?
 export const Flag = 1 << 5; // bit 5 = is this flagged?
 export const Revealed = 1 << 6; // bit 6 = is this revealed?
 
-const PublicIfNotRevealed = Revealed | Flag;
+export const adjacent = tile => tile & AdjacencyMask;
+export const mine = tile => (tile & Mine) !== 0;
+export const flag = tile => (tile & Flag) !== 0;
+export const revealed = tile => (tile & Revealed) !== 0;
 
+const PublicIfNotRevealed = Revealed | Flag;
 
 /**
  *
@@ -28,8 +32,3 @@ export const publicVersion = (tile) => {
         return tile & PublicIfNotRevealed;
     }
 }
-
-export const adjacent = tile => tile & AdjacencyMask;
-export const mine = tile => (tile & Mine) !== 0;
-export const flag = tile => (tile & Flag) !== 0;
-export const revealed = tile => (tile & Revealed) !== 0;

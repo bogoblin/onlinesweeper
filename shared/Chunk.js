@@ -176,6 +176,12 @@ export const chunkDeserialize = (data) => {
     return new Chunk(Array.of(...coords), tiles);
 }
 
+/**
+ *
+ * @param x {number}
+ * @param y {number}
+ * @returns {number[]}
+ */
 export const chunkCoords = ([x,y]) => {
     return [
         Math.floor(x/chunkSize)*chunkSize,
