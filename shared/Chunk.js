@@ -3,6 +3,8 @@ import {adjacent, Flag, flag, Mine, mine, publicVersion, revealed, Revealed} fro
 
 export const chunkSize = 16;
 export class Chunk {
+    canvas;
+
     constructor(coords, tiles) {
         this.coords = chunkCoords(coords);
         if (tiles) {

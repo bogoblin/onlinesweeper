@@ -144,7 +144,7 @@ export class World {
         if (adjacent(tile) === knownAdjacentMines) {
             // reveal all adjacent tiles that aren't flagged
             for (let t of revealCandidates) {
-                this.queueReveal(t);
+                this.queueReveal(player, t);
             }
         }
 

@@ -8,7 +8,7 @@ import spritesUrl from './tiles.png';
 const sprites = new Image();
 sprites.src = spritesUrl;
 
-let debug = true;
+let debug = false;
 
 const getSpriteIndex = (tile) => {
     if (!revealed(tile)) {
