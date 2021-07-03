@@ -4,11 +4,13 @@ import {GeneralMessages} from "../shared/ServerMessage.js";
 import TileMap from "./TileMap.js";
 import TileView from "./TileView.js";
 import {tileSize} from "./TileGraphics.js";
+import {Player} from "../shared/Player.js";
 export class MineSocket {
-    onError;
-    currentError;
-    onWelcome;
-    onLogout;
+    onError = () => {};
+    currentError = () => {};
+    onWelcome = () => {};
+    onLogout = () => {};
+    onPlayerUpdate = () => {};
 
     constructor(url) {
         this.url = url;
@@ -36,6 +38,9 @@ export class MineSocket {
                 reject(err);
             });
         });
+
+        this.players = {};
+        this.username = null;
     }
 
     async connect() {
@@ -82,15 +87,34 @@ export class MineSocket {
                     case ServerMessage.Operation.General:
                         const general = message.content;
                         switch (general.messageType) {
-                            case GeneralMessages.Welcome:
-                                this.tileView.viewCenter = general.coords;
-                                if (this.onWelcome) {
-                                    this.onWelcome();
+                            case GeneralMessages.Welcome: {
+                                this.username = general.username;
+                                const player = this.players[this.username];
+                                console.log(this.players);
+                                if (player) {
+                                    this.tileView.viewCenter = player.position;
+                                    this.players[player.name] = player;
                                 }
+                                this.onWelcome();
+                                this.onPlayerUpdate();
                                 this.currentError = null;
+                            }
                                 break;
-                            case GeneralMessages.Error:
+                            case GeneralMessages.Error: {
                                 this.error(general.err);
+                            }
+                                break;
+                            case GeneralMessages.Player: {
+                                const player = general.player;
+                                const newPlayer = new Player();
+                                newPlayer.username = player.username;
+                                newPlayer.score = player.score;
+                                newPlayer.deadUntil = player.deadUntil;
+                                newPlayer.position = player.position;
+                                this.players[player.username] = newPlayer;
+                                this.onPlayerUpdate();
+                            }
+                                break;
                             default:
                         }
                         break;

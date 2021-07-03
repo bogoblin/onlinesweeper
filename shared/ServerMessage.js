@@ -8,6 +8,7 @@ export const Operation = {
 export const GeneralMessages = {
     Welcome: 'w',
     Error: 'e',
+    Player: 'p',
 }
 
 export class ServerMessage {
@@ -46,10 +47,10 @@ export const serverGeneralMessage = (generalMessage) => {
     return new ServerMessage(Operation.General, generalMessage);
 }
 
-export const welcome = (coords) => {
+export const welcome = player => {
     return new GeneralMessage({
         messageType: GeneralMessages.Welcome,
-        coords
+        username: player.username
     });
 }
 
@@ -57,6 +58,19 @@ export const error = err => {
     return new GeneralMessage({
         messageType: GeneralMessages.Error,
         err
+    });
+}
+
+export const playerMessage = playerToSend => {
+    const publicPlayer = {
+        username: playerToSend.username,
+        position: playerToSend.position,
+        score: playerToSend.score,
+        deadUntil: playerToSend.deadUntil
+    };
+    return new GeneralMessage({
+        messageType: GeneralMessages.Player,
+        player: publicPlayer
     });
 }
 

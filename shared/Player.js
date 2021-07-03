@@ -1,3 +1,5 @@
+import {tileInfo} from "./Tile.js";
+
 export class Player {
     username;
     socket;
@@ -8,6 +10,12 @@ export class Player {
         this.username = username;
         this.hashedPassword = hashedPassword;
         this.position = [0,0];
+        this.score = [];
+        for (let i=0; i<=8; i++) {
+            this.score.push(0);
+        }
+
+        this.deadUntil = 0;
     }
 
     connect(socket) {
@@ -21,5 +29,28 @@ export class Player {
 
     send(serverMessage) {
         this.socket.send(serverMessage.serialize(false));
+    }
+
+    hasRevealed(tile) {
+        const info = tileInfo(tile);
+
+        if (info.mine) {
+            // todo: kill player
+        }
+        else {
+            this.score[info.adjacent] += 1;
+        }
+    }
+
+    isAlive() {
+        return Date.now() > this.deadUntil;
+    }
+
+    points() {
+        let pointTotal = 0;
+        for (let i=0; i<=8; i++) {
+            pointTotal += this.score[i] * Math.pow(i, 4);
+        }
+        return pointTotal;
     }
 }

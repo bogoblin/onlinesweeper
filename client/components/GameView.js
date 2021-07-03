@@ -1,4 +1,5 @@
 import * as React from "react";
+import PlayerDisplay from "./PlayerDisplay.js";
 
 const canvasStyle = {
     margin: '0',
@@ -18,10 +19,17 @@ const GameView = ({mineSocket}) => {
         mineSocket.tileView.setCanvas(gameCanvas.current);
     })
 
+    const [player, setPlayer] = React.useState(null);
+
+    mineSocket.onPlayerUpdate = () => {
+        setPlayer(mineSocket.players[mineSocket.username]);
+    }
+
     return <div>
         <canvas ref={gameCanvas} style={canvasStyle}/>
         <div style={panelStyle}>
             <button onClick={() => mineSocket.logOut()}>Log out</button>
+            <PlayerDisplay player={player}/>
         </div>
     </div>
 }

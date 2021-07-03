@@ -88,26 +88,31 @@ export class Chunk {
 
     /**
      *
+     * @param player {Player}
      * @param worldCoords {number[]}
      * @param world {World}
      */
-    reveal(worldCoords, world) {
+    reveal(player, worldCoords, world) {
         const index = this.indexOf(worldCoords);
         if (index === -1) {
-            world.queueReveal(worldCoords);
+            world.queueReveal(player, worldCoords);
             return;
         }
 
-        const tileIsRevealedAlready = revealed(this.tiles[index]);
-        if (tileIsRevealedAlready) return;
+        const tile = this.tiles[index];
 
+        if (revealed(tile)) return;
+
+        const numberOfAdjacentMines = adjacent(tile);
+        player.hasRevealed(tile);
         this.tiles[index] += Revealed;
 
-        if (adjacent(this.tiles[index]) === 0) {
+        // Reveal adjacent tiles if none of them are mines
+        if (numberOfAdjacentMines === 0) {
             forEachNeighbour(worldCoords, (adjacentCoords) => {
                 const adjacentTile = this.getTile(adjacentCoords);
                 if (!revealed(adjacentTile)) {
-                    this.reveal(adjacentCoords, world);
+                    this.reveal(player, adjacentCoords, world);
                 }
             });
         }
