@@ -3,6 +3,7 @@ import {Chunk, chunkSize} from "../shared/Chunk.js";
 import {forEachInRect, forEachNeighbour, vectorFloor} from "../shared/Vector2.js";
 import {adjacent, mine, revealed, tileInfo} from "../shared/Tile.js";
 import {Player} from "../shared/Player.js";
+import {minesForChunk} from "./ChunkGenerator.js";
 
 export class World {
     constructor() {
@@ -83,7 +84,8 @@ export class World {
             // Generate this chunk and adjacent chunks
             forEachNeighbour(worldCoords, (chunkCoords) => {
                 if (!this.chunks.getChunk(chunkCoords)) {
-                    const newChunk = this.generateChunk(chunkCoords, 0.15);
+                    const mineIndexes = minesForChunk(chunkCoords);
+                    const newChunk = this.insertChunk(chunkCoords, mineIndexes);
                     chunksUpdated.add(newChunk);
                 }
             }, chunkSize); // step size is chunk size because we are checking neighbouring chunks
@@ -170,7 +172,7 @@ export class World {
         player.move(worldCoords);
     }
 
-    generateChunk(worldCoords, difficulty) {
+    insertChunk(worldCoords, mineIndexes) {
         const existingChunk = this.chunks.getChunk(worldCoords);
         if (existingChunk) return existingChunk;
 
@@ -197,11 +199,9 @@ export class World {
         });
 
         // Add mines to new chunk
-        forEachInRect(chunkRect, (mineCoords) => {
-            if (Math.random() < difficulty) { // There is a difficulty/1 chance of each tile being a mine
-                newChunk.addMine(mineCoords, this.chunks);
-            }
-        })
+        for (let index of mineIndexes) {
+            newChunk.addMine(index, this.chunks);
+        }
 
         this.chunks.addChunk(newChunk);
         return newChunk;

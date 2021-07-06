@@ -41,6 +41,17 @@ export class Chunk {
         return row*chunkSize + col;
     }
 
+    /**
+     * The inverse of indexOf()
+     * @param index {number}
+     * @returns {number[]}
+     */
+    coordsOf(index) {
+        const col = index % chunkSize;
+        const row = Math.floor(index/chunkSize);
+        return vectorAdd(this.topLeft(), [col, row]);
+    }
+
     updateTile(worldCoords, tile) {
         const index = this.indexOf(worldCoords);
         if (index === -1) return;
@@ -66,9 +77,8 @@ export class Chunk {
         context.drawImage(this.canvas, screenX, screenY);
     }
 
-    addMine(worldCoords, chunkStore) {
-        const index = this.indexOf(worldCoords);
-        if (index === -1) return;
+    addMine(index, chunkStore) {
+        if (index < 0 || index > chunkSize*chunkSize) return;
 
         const tileIsMineAlready = mine(this.tiles[index]);
         if (tileIsMineAlready) return;
@@ -76,7 +86,7 @@ export class Chunk {
         this.tiles[index] |= Mine;
 
         // Now we need to update the number of adjacent tiles
-        forEachNeighbour(worldCoords, (coordsOfAdjTile) => {
+        forEachNeighbour(this.coordsOf(index), (coordsOfAdjTile) => {
             const indexOfAdjTile = this.indexOf(coordsOfAdjTile);
             if (indexOfAdjTile === -1) {
                 const adjChunk = chunkStore.getChunk(coordsOfAdjTile);
