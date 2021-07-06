@@ -23,6 +23,7 @@ export class Player {
         publicPlayer.position = this.position;
         publicPlayer.score = this.score;
         publicPlayer.deadUntil = this.deadUntil;
+        return publicPlayer;
     }
 
     connect(socket) {
