@@ -19,11 +19,12 @@ export class Player {
     }
 
     publicVersion() {
-        const publicPlayer = new Player(this.username, '');
-        publicPlayer.position = this.position;
-        publicPlayer.score = this.score;
-        publicPlayer.deadUntil = this.deadUntil;
-        return publicPlayer;
+        return {
+            username: this.username,
+            position: this.position,
+            score: this.score,
+            deadUntil: this.deadUntil
+        };
     }
 
     connect(socket) {

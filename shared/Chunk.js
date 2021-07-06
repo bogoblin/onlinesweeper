@@ -154,7 +154,10 @@ export class Chunk {
 
     publicVersion() {
         const publicTiles = this.tiles.map(tile => publicVersion(tile));
-        return new Chunk(this.coords, publicTiles);
+        return {
+            coords: this.coords,
+            tiles: publicTiles
+        };
     }
 }
 
