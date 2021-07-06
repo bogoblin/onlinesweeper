@@ -10,14 +10,11 @@ export const AppStates = {
 export const App = ({mineSocket}) => {
     const [state, setState] = React.useState(AppStates.Login);
 
-    const initialUsername = localStorage.getItem('username') || '';
-    const [username, setUsername] = React.useState(initialUsername);
-
-    const initialPassword = localStorage.getItem('password') || '';
-    const [password, setPassword] = React.useState(initialPassword);
+    const [username, setUsername] = React.useState('');
+    const [password, setPassword] = React.useState('');
 
     mineSocket.onError = () => {
-        setState(AppStates.Login)
+        setState(AppStates.Login);
     }
     mineSocket.onWelcome = () => {
         setState(AppStates.Game);
@@ -33,18 +30,7 @@ export const App = ({mineSocket}) => {
 
     const handleSubmit = () => {
         setState(AppStates.Loading);
-
-        mineSocket.connect()
-            .then(() => {
-                mineSocket.sendLoginMessage(username, password);
-            })
-            .catch(err => {
-                setState(AppStates.Login)
-            })
-    }
-
-    if (state === AppStates.Login && initialUsername && initialPassword) {
-        handleSubmit();
+        mineSocket.socket.emit('login', username, password);
     }
 
     switch (state) {

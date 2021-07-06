@@ -1,16 +1,16 @@
-import * as UserMessage from "../shared/UserMessage.js";
-import * as ServerMessage from "../shared/ServerMessage.js";
-import {GeneralMessages} from "../shared/ServerMessage.js";
 import TileMap from "./TileMap.js";
 import TileView from "./TileView.js";
 import {tileSize} from "./TileGraphics.js";
 import {Player} from "../shared/Player.js";
+import { io } from "socket.io-client";
+import {Chunk} from "../shared/Chunk.js";
 export class MineSocket {
     onError = () => {};
-    currentError = () => {};
     onWelcome = () => {};
     onLogout = () => {};
     onPlayerUpdate = () => {};
+
+    currentError;
 
     constructor(url) {
         this.url = url;
@@ -18,108 +18,62 @@ export class MineSocket {
     }
 
     reset() {
-        this.socket = new WebSocket(this.url);
+        this.socket = io(this.url);
         this.tileMap = new TileMap();
         this.tileView = new TileView(tileSize, this.tileMap);
 
         this.tileMap.socket = this;
         this.tileView.socket = this;
 
-        this.socket.onmessage = (ev) => {
-            this.receiveMessage(ev);
-        }
-
-        this.connectPromise = new Promise((resolve, reject) => {
-            console.log('running the promise');
-            this.socket.addEventListener('open', () => {
-                resolve(this);
-            });
-            this.socket.addEventListener('error', (err) => {
-                reject(err);
-            });
-        });
-
         this.players = {};
         this.username = null;
-    }
 
-    async connect() {
-        return this.connectPromise;
+        this.socket.on('connect', () => {
+            this.socket.on('chunk', chunk => {
+                if (!chunk) {
+                    return;
+                }
+                this.tileMap.addChunk(new Chunk(chunk.coords, new Uint8Array(chunk.tiles)));
+            });
+            this.socket.on('player', player => {
+                if (!player) {
+                    return;
+                }
+                const receivedPlayer = new Player();
+                this.players[player.username] = Object.assign(receivedPlayer, player);
+                this.onPlayerUpdate();
+            });
+            this.socket.on('welcome', username => {
+                this.username = username;
+                this.onPlayerUpdate();
+                this.onWelcome();
+                console.log('welcome');
+            });
+            this.socket.on('error', error => {
+                console.log(error);
+                this.error(error);
+            });
+        });
     }
 
     sendClickMessage(coords) { // c for click
-        this.socket.send(UserMessage.coordsMessage(UserMessage.Operation.Click, coords).serialize());
+        this.socket.emit('click', coords);
     }
 
     sendFlagMessage(coords) { // f for flag
-        this.socket.send(UserMessage.coordsMessage(UserMessage.Operation.Flag, coords).serialize());
+        this.socket.emit('flag', coords);
     }
 
     sendDoubleClickMessage(coords) { // d for double click
-        this.socket.send(UserMessage.coordsMessage(UserMessage.Operation.DoubleClick, coords).serialize());
+        this.socket.emit('doubleClick', coords);
     }
 
     sendMoveMessage(coords) { // m for move
-        this.socket.send(UserMessage.coordsMessage(UserMessage.Operation.Move, coords).serialize());
+        this.socket.emit('move', coords);
     }
 
     sendLoginMessage(username, password) {
-        this.socket.send(UserMessage.loginMessage(username, password).serialize());
-    }
-
-    /**
-     * @param ev {MessageEvent}
-     */
-    receiveMessage(ev) {
-        new Response(ev.data).arrayBuffer()
-            .then(a => {
-                const data = new Uint8Array(a);
-                const message = ServerMessage.serverMessageDeserialize(data);
-                if (!message || !message.operation) {
-                    console.log(data);
-                    return;
-                }
-                switch (message.operation) {
-                    case ServerMessage.Operation.Chunk:
-                        const chunk = message.content;
-                        this.tileMap.addChunk(chunk);
-                        break;
-                    case ServerMessage.Operation.General:
-                        const general = message.content;
-                        switch (general.messageType) {
-                            case GeneralMessages.Welcome: {
-                                this.username = general.username;
-                                const player = this.players[this.username];
-                                console.log(this.players);
-                                if (player) {
-                                    this.tileView.viewCenter = player.position;
-                                    this.players[player.name] = player;
-                                }
-                                this.onWelcome();
-                                this.onPlayerUpdate();
-                                this.currentError = null;
-                            }
-                                break;
-                            case GeneralMessages.Error: {
-                                this.error(general.err);
-                            }
-                                break;
-                            case GeneralMessages.Player: {
-                                const player = general.player;
-                                const newPlayer = new Player();
-                                newPlayer.username = player.username;
-                                newPlayer.score = player.score;
-                                newPlayer.deadUntil = player.deadUntil;
-                                newPlayer.position = player.position;
-                                this.players[player.username] = newPlayer;
-                                this.onPlayerUpdate();
-                            }
-                                break;
-                            default:
-                        }
-                        break;
-                }
-            })
+        this.socket.emit('login', username, password);
     }
 
     error(err) {
@@ -130,7 +84,7 @@ export class MineSocket {
     }
 
     logOut() {
-        this.socket.close(1000, 'Logging out');
+        this.socket.disconnect();
         if (this.onLogout) {
             this.onLogout();
         }

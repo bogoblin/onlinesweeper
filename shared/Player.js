@@ -18,6 +18,13 @@ export class Player {
         this.deadUntil = 0;
     }
 
+    publicVersion() {
+        const publicPlayer = new Player(this.username, '');
+        publicPlayer.position = this.position;
+        publicPlayer.score = this.score;
+        publicPlayer.deadUntil = this.deadUntil;
+    }
+
     connect(socket) {
         this.socket = socket;
         socket.player = this;
@@ -25,10 +32,6 @@ export class Player {
 
     move(newPosition) {
         this.position = newPosition;
-    }
-
-    send(serverMessage) {
-        this.socket.send(serverMessage.serialize(false));
     }
 
     hasRevealed(tile) {

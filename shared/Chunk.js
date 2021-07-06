@@ -3,6 +3,8 @@ import {adjacent, Flag, flag, Mine, mine, publicVersion, revealed, Revealed} fro
 
 export const chunkSize = 16;
 export class Chunk {
+    coords;
+    tiles;
     canvas;
 
     constructor(coords, tiles) {
@@ -150,30 +152,10 @@ export class Chunk {
         return [this.topLeft(), this.bottomRight()];
     }
 
-    publicSerialize() {
+    publicVersion() {
         const publicTiles = this.tiles.map(tile => publicVersion(tile));
-        const pubVer = new Chunk(this.coords, publicTiles);
-        return pubVer.serialize();
+        return new Chunk(this.coords, publicTiles);
     }
-
-    serialize() {
-        const coords = new Uint8Array(Int32Array.from(this.coords).buffer);
-        const tiles = this.tiles;
-        const data = new Uint8Array(8 + chunkSize*chunkSize);
-        data.set(coords, 0);
-        data.set(tiles, 8);
-        return data;
-    }
-}
-
-/**
- * @param data {Uint8Array}
- */
-export const chunkDeserialize = (data) => {
-    const tiles = data.slice(8);
-    const coords = new Int32Array(data.slice(0,8).buffer);
-
-    return new Chunk(Array.of(...coords), tiles);
 }
 
 /**

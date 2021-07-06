@@ -3,7 +3,6 @@ import {Chunk, chunkSize} from "../shared/Chunk.js";
 import {forEachInRect, forEachNeighbour, vectorFloor} from "../shared/Vector2.js";
 import {adjacent, mine, revealed, tileInfo} from "../shared/Tile.js";
 import {Player} from "../shared/Player.js";
-import {Operation, playerMessage, serverGeneralMessage, ServerMessage, welcome} from "../shared/ServerMessage.js";
 
 export class World {
     constructor() {
@@ -22,6 +21,10 @@ export class World {
         return this.players[username];
     }
 
+    getPlayers() {
+        return Object.values(this.players);
+    }
+
     addPlayer(username, hashedPassword) {
         if (!this.getPlayer(username)) {
             this.players[username] = new Player(username, hashedPassword);
@@ -32,9 +35,17 @@ export class World {
     addChunk(chunk) {
         this.chunks.addChunk(chunk);
         if (this.messageSender) {
-            this.messageSender.sendToAll(new ServerMessage(Operation.Chunk, chunk));
+            this.messageSender.chunk(chunk);
         }
         console.log(`Added chunk ${chunk.coords}`)
+    }
+
+    /**
+     * Get an array of all the current chunks
+     * @returns {Chunk[]} the array of chunks
+     */
+    getChunks() {
+        return Object.values(this.chunks.chunks);
     }
 
     /**
@@ -57,7 +68,7 @@ export class World {
     queueReveal(player, worldCoords) {
         const coords = vectorFloor(worldCoords);
         this.revealQueue.push({player, worldCoords});
-        console.log(`Added ${coords} to queue`)
+        console.log(`${player.username} Added ${coords} to queue`)
     }
 
     handleRevealQueue() {
@@ -86,10 +97,10 @@ export class World {
         }
 
         for (let chunk of chunksUpdated) {
-            this.messageSender.sendToAll(new ServerMessage(Operation.Chunk, chunk));
+            this.messageSender.chunk(chunk);
         }
         for (let player of playersUpdated) {
-            this.messageSender.sendToAll(serverGeneralMessage(playerMessage(player)));
+            this.messageSender.player(player);
         }
     }
 
@@ -104,7 +115,7 @@ export class World {
         let chunk = this.chunks.getChunk(worldCoords);
         if (chunk) {
             chunk.flag(worldCoords);
-            this.messageSender.sendToAll(new ServerMessage(Operation.Chunk, chunk));
+            this.messageSender.chunk(chunk);
         }
     }
 
@@ -157,17 +168,6 @@ export class World {
      */
     move(player, worldCoords) {
         player.move(worldCoords);
-    }
-
-    greet(player) {
-        for (let chunk of Object.values(this.chunks.chunks)) {
-            player.send(new ServerMessage(Operation.Chunk, chunk));
-        }
-        for (let p of Object.values(this.players)) {
-            p.send(serverGeneralMessage(playerMessage(p)));
-        }
-
-        player.send(new ServerMessage(Operation.General, welcome(player)));
     }
 
     generateChunk(worldCoords, difficulty) {

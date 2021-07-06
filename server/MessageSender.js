@@ -1,86 +1,152 @@
-import {Operation, userMessageDeserialize} from "../shared/UserMessage.js";
 import * as sha256 from 'sha-256';
-import {error, serverGeneralMessage, ServerMessage} from "../shared/ServerMessage.js";
+import {Server} from 'socket.io';
+import {Chunk} from "../shared/Chunk.js";
 
 const salt = process.env['salt'];
 
 export class MessageSender {
-    world; // Set from World.js
-
-    constructor(server, world) {
+    /**
+     *
+     * @param io {Server}
+     * @param world {World}
+     */
+    constructor(io, world) {
+        this.io = io;
         this.world = world;
         world.setMessageSender(this);
-
-        server.on('connection', (socket) => {
-            this.connectedPlayers = {};
-
-            socket.on('message', (m) => {
-                const message = userMessageDeserialize(m);
-                let player = socket.player;
-                switch (message.operation) {
-                    case Operation.Login:
-                        const {username, password} = message;
-                        if (!player && username && password) {
-                            const hashed = hashPassword(password);
-                            const existingPlayer = this.world.getPlayer(username);
-                            if (existingPlayer) {
-                                if (existingPlayer.hashedPassword === hashed) {
-                                    player = existingPlayer;
-                                } else {
-                                    socket.send(serverGeneralMessage(error(
-                                        `The password you entered doesn't match what we have for this username.`
-                                    )).serialize());
-                                }
-                            } else {
-                                // create new player
-                                player = this.world.addPlayer(username, hashed);
-                            }
-
-                            if (player) {
-                                player.connect(socket);
-                                this.world.greet(player);
-                                this.connectedPlayers[username] = player;
-                            }
-                        }
-                        break;
-                    case Operation.Click:
-                        if (player) {
-                            this.world.reveal(player, message.worldCoords);
-                        }
-                        break;
-                    case Operation.Flag:
-                        if (player) {
-                            this.world.flag(player, message.worldCoords);
-                        }
-                        break;
-                    case Operation.DoubleClick:
-                        if (player) {
-                            this.world.doubleClick(player, message.worldCoords);
-                        }
-                        break;
-                    case Operation.Move:
-                        if (player) {
-                            this.world.move(player, message.worldCoords);
-                        }
-                        break;
-                    default:
-                        break;
-                }
-            });
-
-            socket.on('close', () => {
-                if (socket.player) {
-                    delete this.connectedPlayers[socket.player.username];
-                }
-            });
+        io.on('connection', socket => {
+            console.log('someone connected');
+           this.initializeSocket(socket);
         });
     }
 
-    sendToAll(message) {
-        for (let player of Object.values(this.connectedPlayers)) {
-            player.send(message);
+    /**
+     * Sends the chunk data to the recipient. If no recipient is given, send it to everyone.
+     * @param chunkToSend {Chunk}
+     * @param recipient {Player?}
+     */
+    chunk(chunkToSend, recipient) {
+        if (!recipient) {
+            // send to everyone
+            this.io.emit('chunk', chunkToSend.publicVersion());
+        } else {
+            recipient.socket.emit('chunk', chunkToSend.publicVersion());
         }
+    }
+
+    /**
+     * Sends the player data to the recipient. If no recipient is given, send it to everyone.
+     * @param playerToSend {Player}
+     * @param recipient {Player?}
+     */
+    player(playerToSend, recipient) {
+        if (!recipient) {
+            // send to everyone
+            this.io.emit('player', playerToSend.publicVersion());
+        } else {
+            recipient.socket.emit('player', playerToSend.publicVersion());
+        }
+    }
+
+    /**
+     *
+     * @param playerToWelcome {Player}
+     */
+    welcome(playerToWelcome) {
+        // send the player all chunks
+        for (let chunk of this.world.getChunks()) {
+            this.chunk(chunk, playerToWelcome);
+        }
+
+        // send all player info
+        for (let player of this.world.getPlayers()) {
+            this.player(player, playerToWelcome);
+        }
+
+        // send welcome event
+        playerToWelcome.socket.emit('welcome', playerToWelcome.username);
+    }
+
+    initializeSocket = socket => {
+        socket.on('login', (username, password) => {
+            console.log(`${username} logging in...`);
+            const existingPlayer = this.world.getPlayer(username);
+            if (!existingPlayer) {
+                // then it's a registration
+                // validate username and password
+                {
+                    const [valid, reason] = validUsername(username);
+                    if (!valid) {
+                        socket.emit('error', {reason});
+                        return;
+                    }
+                }
+                {
+                    const [valid, reason] = validPassword(password);
+                    if (!valid) {
+                        socket.emit('error', {reason});
+                        return;
+                    }
+                }
+
+                const player = this.world.addPlayer(username, hashPassword(password));
+                this.initializePlayer(player, socket);
+                return;
+            }
+            if (existingPlayer.hashedPassword === hashPassword(password)) {
+                // password is correct
+                this.initializePlayer(existingPlayer, socket);
+            } else {
+                // password is incorrect
+                socket.emit('error', {reason: `User ${username} exists, but the password is wrong. Try again.`});
+            }
+        });
+    }
+
+    /**
+     *
+     * @param player {Player}
+     * @param socket
+     */
+    initializePlayer = (player, socket) => {
+        player.connect(socket);
+
+        socket.on('click', coords => {
+            this.world.reveal(player, coords);
+        });
+        socket.on('flag', coords => {
+            this.world.flag(player, coords);
+        });
+        socket.on('doubleClick', coords => {
+            this.world.doubleClick(player, coords);
+        });
+        socket.on('move', coords => {
+            this.world.move(player, coords);
+        });
+
+        socket.on('disconnect', () => {
+            player.socket = null;
+        });
+
+        console.log('sending welcome')
+        this.welcome(player);
     }
 }
 
 const hashPassword = password => sha256.hash(salt+password);
+
+const validUsername = username => {
+    const [minL, maxL] = [3, 30];
+    if (username.length <= minL || username.length >= maxL) {
+        return [false, `Username must be between ${minL} and ${maxL} characters in length.`];
+    }
+    return [true, ''];
+}
+
+const validPassword = password => {
+    const [minL, maxL] = [6, 30];
+    if (password.length <= minL || password.length >= maxL) {
+        return [false, `Password must be between ${minL} and ${maxL} characters in length.`];
+    }
+    return [true, ''];
+}
