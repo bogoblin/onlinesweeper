@@ -4,6 +4,7 @@ import {forEachInRect, forEachNeighbour, vectorFloor} from "../shared/Vector2.js
 import {adjacent, mine, revealed, tileInfo} from "../shared/Tile.js";
 import {Player} from "../shared/Player.js";
 import {minesForChunk} from "./ChunkGenerator.js";
+import {event} from './Event.js';
 
 export class World {
     constructor() {
@@ -29,6 +30,11 @@ export class World {
     addPlayer(username, hashedPassword) {
         if (!this.getPlayer(username)) {
             this.players[username] = new Player(username, hashedPassword);
+            event.log({
+                type: 'register',
+                username,
+                hashedPassword
+            });
         }
         return this.getPlayer(username);
     }
@@ -57,7 +63,15 @@ export class World {
         if (!player.isAlive()) {
             return;
         }
-        this.queueReveal(player, worldCoords);
+        const coords = vectorFloor(worldCoords);
+
+        event.log({
+            type: 'reveal',
+            player: player.username,
+            coords: coords
+        });
+
+        this.queueReveal(player, coords);
         this.handleRevealQueue();
     }
 
@@ -114,9 +128,16 @@ export class World {
         if (!player.isAlive()) {
             return;
         }
-        let chunk = this.chunks.getChunk(worldCoords);
+        const coords = vectorFloor(worldCoords);
+
+        let chunk = this.chunks.getChunk(coords);
         if (chunk) {
-            chunk.flag(worldCoords);
+            chunk.flag(coords);
+            event.log({
+                type: 'flag',
+                player: player.username,
+                coords: coords
+            });
             this.messageSender.chunk(chunk);
         }
     }
@@ -170,6 +191,11 @@ export class World {
      */
     move(player, worldCoords) {
         player.move(worldCoords);
+        event.log({
+            type: 'move',
+            player: player.username,
+            coords: worldCoords
+        });
     }
 
     insertChunk(worldCoords, mineIndexes) {
@@ -177,7 +203,11 @@ export class World {
         if (existingChunk) return existingChunk;
 
         const newChunk = new Chunk(worldCoords);
-        console.log(`Generating new chunk at ${newChunk.coords}`);
+        event.log({
+            type: 'new chunk',
+            coords: newChunk.coords,
+            mines: mineIndexes
+        });
 
         const chunkRect = newChunk.rect();
 
