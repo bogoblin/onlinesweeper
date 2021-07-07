@@ -30,6 +30,9 @@ export class Player {
     connect(socket) {
         this.socket = socket;
         socket.player = this;
+        const session = socket.request.session;
+        session.username = this.username;
+        session.save();
     }
 
     move(newPosition) {

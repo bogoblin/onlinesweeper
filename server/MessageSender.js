@@ -16,7 +16,7 @@ export class MessageSender {
         world.setMessageSender(this);
         io.on('connection', socket => {
             console.log('someone connected');
-           this.initializeSocket(socket);
+            this.initializeSocket(socket);
         });
     }
 
@@ -68,6 +68,17 @@ export class MessageSender {
     }
 
     initializeSocket = socket => {
+        const session = socket.request.session;
+
+        if (session) {
+            if (session.username) {
+                const player = this.world.getPlayer(session.username);
+                if (player) {
+                    this.initializePlayer(player, socket);
+                }
+            }
+        }
+
         socket.on('login', (username, password) => {
             console.log(`${username} logging in...`);
             const existingPlayer = this.world.getPlayer(username);
