@@ -1,37 +1,15 @@
 import * as fs from 'fs';
 import {EOL} from 'os';
 
-const LogFile = './log';
-
 class EventSource {
     constructor() {
         this.eventQueue = [];
-        this.logQueue = [];
-
-        this.appendingLogs = false;
-
-        fs.writeFileSync(LogFile, ''); // Clears the log file
+        this.writer = new EventWriter('./log');
     }
 
     log(event) {
         console.log(event);
-
-        this.logQueue.push(event);
-        if (!this.appendingLogs) {
-            this.appendingLogs = true;
-            // Write all events in the log queue, separated by end of line.
-            // EOL at the end because array.join doesn't add that.
-            const toWrite = this.logQueue.map(e => JSON.stringify(e)).join(EOL)+EOL;
-            // Clear the log queue so that events don't get written twice
-            this.logQueue = [];
-            fs.appendFile(LogFile, toWrite, err => {
-                if (err) {
-                    throw "Can't append events to file";
-                }
-                // Allow more logs to be written
-                this.appendingLogs = false;
-            })
-        }
+        this.writer.write(event);
     }
 
     queue(event) {
@@ -40,6 +18,43 @@ class EventSource {
 
     read() {
         return this.eventQueue.shift();
+    }
+}
+
+class EventWriter {
+    constructor(fileName) {
+        this.fileName = fileName;
+        fs.writeFileSync(this.fileName, ''); // Clears the log file
+
+        this.writeQueue = [];
+        this.appending = false;
+    }
+
+    write(event) {
+        this.writeQueue.push(event);
+        this.flush();
+    }
+
+    flush() {
+        if (this.writeQueue.length === 0 || this.appending) {
+            return;
+        }
+
+        this.appending = true;
+        // Write all events in the queue, separated by end of line.
+        // EOL at the end because array.join doesn't add that.
+        const toWrite = this.writeQueue.map(e => JSON.stringify(e)).join(EOL)+EOL;
+        // Clear the log queue so that events don't get written twice.
+        this.writeQueue = [];
+        fs.appendFile(this.fileName, toWrite, err => {
+            if (err) {
+                throw "Can't append events to file";
+            }
+            // Allow more logs to be written
+            this.appending = false;
+
+            this.flush(); // Flush again, in case there are any events left in the queue
+        });
     }
 }
 
