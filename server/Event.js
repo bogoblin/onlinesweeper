@@ -1,10 +1,19 @@
 import * as fs from 'fs';
 import {EOL} from 'os';
+import dateformat from 'dateformat';
+import ReadLines from 'n-readlines';
+
+const logDir = './logs';
 
 class EventSource {
     constructor() {
-        this.eventQueue = [];
-        this.writer = new EventWriter('./log');
+        const logFiles = fs.readdirSync(logDir).sort((a, b) => b.localeCompare(a));
+        if (logFiles.length > 0) {
+            const latestLogFile = logDir + '/' + logFiles[0];
+            this.reader = new EventReader(latestLogFile);
+        }
+
+        this.writer = new EventWriter(`${logDir}/log_${dateformat(new Date(), "yyyymmdd-HHMMss")}`);
     }
 
     log(event) {
@@ -12,12 +21,54 @@ class EventSource {
         this.writer.write(event);
     }
 
-    queue(event) {
-        this.eventQueue.push(event);
+    read() {
+        if (!this.reader) {
+            return null;
+        }
+        return this.reader.read();
+    }
+
+    next() {
+        if (!this.reader) {
+            return null;
+        }
+        return this.reader.next();
+    }
+}
+
+class EventReader {
+    constructor(fileName) {
+        this.nextEvent = null;
+        this.reader = new ReadLines(fileName);
+        console.log(`EventReader: loaded ${fileName}`);
     }
 
     read() {
-        return this.eventQueue.shift();
+        if (this.nextEvent) {
+            const toReturn = this.nextEvent;
+            this.nextEvent = null;
+            return toReturn;
+        }
+        if (!this.reader) {
+            return null;
+        }
+        const newEvent = this.reader.next();
+        if (!newEvent) {
+            return null;
+        }
+        try {
+            return JSON.parse(newEvent);
+        } catch (e) {
+            this.reader.close();
+            // todo: throw an exception or something
+        }
+    }
+
+    next() {
+        if (!this.nextEvent) {
+            this.nextEvent = this.read();
+        }
+        return this.nextEvent;
     }
 }
 

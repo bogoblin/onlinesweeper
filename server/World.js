@@ -12,6 +12,37 @@ export class World {
         this.players = {};
 
         this.revealQueue = [];
+
+        this.parseEventQueue();
+    }
+
+    parseEventQueue() {
+        let e;
+        while (e = event.read()) {
+            switch (e.type) {
+                case 'register':
+                    this.addPlayer(e.username, e.hashedPassword);
+                    break;
+                case 'reveal':
+                    // If there are new chunks in the event log,
+                    // we need to load those instead of generating them randomly
+                    while (event.next() && event.next().type === 'new chunk') {
+                        const {coords, mines} = event.read();
+                        this.insertChunk(coords, mines);
+                    }
+                    this.reveal(this.players[e.player], e.coords);
+                    break;
+                case 'flag':
+                    this.flag(this.players[e.player], e.coords);
+                    break;
+                case 'move':
+                    this.move(this.players[e.player], e.coords);
+                    break;
+                case 'new chunk':
+                    this.insertChunk(e.coords, e.mines);
+                    break;
+            }
+        }
     }
 
     setMessageSender(messageSender) {
@@ -112,11 +143,13 @@ export class World {
             itemsHandled++;
         }
 
-        for (let chunk of chunksUpdated) {
-            this.messageSender.chunk(chunk);
-        }
-        for (let player of playersUpdated) {
-            this.messageSender.player(player);
+        if (this.messageSender) {
+            for (let chunk of chunksUpdated) {
+                this.messageSender.chunk(chunk);
+            }
+            for (let player of playersUpdated) {
+                this.messageSender.player(player);
+            }
         }
     }
 
@@ -138,7 +171,9 @@ export class World {
                 player: player.username,
                 coords: coords
             });
-            this.messageSender.chunk(chunk);
+            if (this.messageSender) {
+                this.messageSender.chunk(chunk);
+            }
         }
     }
 
@@ -177,8 +212,8 @@ export class World {
         });
         if (adjacent(tile) === knownAdjacentMines) {
             // reveal all adjacent tiles that aren't flagged
-            for (let t of revealCandidates) {
-                this.queueReveal(player, t);
+            for (let candidateCoords of revealCandidates) {
+                this.reveal(player, candidateCoords);
             }
         }
 
