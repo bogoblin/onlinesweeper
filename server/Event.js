@@ -38,11 +38,18 @@ class EventSource {
 
 class EventReader {
     constructor(fileName) {
+        // We need to be able to check what the next event is without removing it from the queue,
+        // so it can be held in nextEvent
         this.nextEvent = null;
+
         this.reader = new ReadLines(fileName);
         console.log(`EventReader: loaded ${fileName}`);
     }
 
+    /**
+     * Reads and returns an event from the queue
+     * @returns {null|Object} the next event from the queue
+     */
     read() {
         if (this.nextEvent) {
             const toReturn = this.nextEvent;
@@ -60,10 +67,13 @@ class EventReader {
             return JSON.parse(newEvent);
         } catch (e) {
             this.reader.close();
-            // todo: throw an exception or something
         }
     }
 
+    /**
+     * Returns the next event in the queue, without removing it from the queue
+     * @returns {null|Object} the next event in the queue
+     */
     next() {
         if (!this.nextEvent) {
             this.nextEvent = this.read();
