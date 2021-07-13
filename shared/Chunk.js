@@ -68,6 +68,13 @@ export class Chunk {
         return this.tiles[index];
     }
 
+    /**
+     * Draw this to the canvas context
+     * @param context {CanvasRenderingContext2D}
+     * @param screenX {number}
+     * @param screenY {number}
+     * @param drawFunction {function}
+     */
     draw(context, [screenX, screenY], drawFunction) {
         // Redraw this chunk if we need to
         if (this.redraw) {

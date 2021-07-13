@@ -1,4 +1,5 @@
 import {Player} from "../shared/Player.js";
+import {PlayerInfo} from "./canvasUI/PlayerInfo.js";
 
 export class ClientPlayers {
     constructor() {
@@ -8,7 +9,9 @@ export class ClientPlayers {
     updatePlayer(player) {
         const username = player.username;
         if (!this.players[username]) {
-            this.players[username] = new Player(username);
+            const newPlayer = new Player(username);
+            newPlayer.playerInfo = new PlayerInfo(newPlayer);
+            this.players[username] = newPlayer;
         }
         this.players[username] = Object.assign(this.players[username], player);
     }
@@ -34,5 +37,9 @@ export class ClientPlayers {
 
     setMyUsername(username) {
         this.myUsername = username;
+    }
+
+    draw(context) {
+        // todo: draw cursors, etc
     }
 }

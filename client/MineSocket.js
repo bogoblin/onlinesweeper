@@ -20,13 +20,13 @@ export class MineSocket {
 
     reset() {
         this.socket = io(this.url);
+        this.players = new ClientPlayers();
         this.tileMap = new TileMap();
-        this.tileView = new TileView(tileSize, this.tileMap);
+        this.tileView = new TileView(tileSize, this.tileMap, this.players);
 
         this.tileMap.socket = this;
         this.tileView.socket = this;
 
-        this.players = new ClientPlayers();
 
         this.socket.on('connect', () => {
             this.socket.on('chunk', chunk => {

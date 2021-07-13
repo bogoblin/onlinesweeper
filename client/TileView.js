@@ -4,10 +4,12 @@ class TileView {
     /**
      * @param tileSize {number}
      * @param tileMap {TileMap}
+     * @param players {ClientPlayers}
      */
-    constructor( tileSize, tileMap ) {
+    constructor( tileSize, tileMap, players ) {
         this.tileSize = tileSize;
         this.tileMap = tileMap;
+        this.players = players;
 
         this.viewCenter = [0,0];
 
@@ -121,6 +123,8 @@ class TileView {
             this.tileSize,
             this
         );
+
+        this.players.draw(this.context);
 
         requestAnimationFrame(() => {
             this.draw();
