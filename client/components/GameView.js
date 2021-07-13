@@ -22,7 +22,7 @@ const GameView = ({mineSocket}) => {
     const [player, setPlayer] = React.useState(null);
 
     mineSocket.onPlayerUpdate = () => {
-        setPlayer(mineSocket.players[mineSocket.username]);
+        setPlayer(mineSocket.players.me());
     }
 
     return <div>

@@ -4,6 +4,7 @@ import {tileSize} from "./TileGraphics.js";
 import {Player} from "../shared/Player.js";
 import { io } from "socket.io-client";
 import {Chunk} from "../shared/Chunk.js";
+import {ClientPlayers} from "./ClientPlayers.js";
 export class MineSocket {
     onError = () => {};
     onWelcome = () => {};
@@ -25,8 +26,7 @@ export class MineSocket {
         this.tileMap.socket = this;
         this.tileView.socket = this;
 
-        this.players = {};
-        this.username = null;
+        this.players = new ClientPlayers();
 
         this.socket.on('connect', () => {
             this.socket.on('chunk', chunk => {
@@ -39,16 +39,15 @@ export class MineSocket {
                 if (!player) {
                     return;
                 }
-                const receivedPlayer = new Player();
-                this.players[player.username] = Object.assign(receivedPlayer, player);
+                this.players.updatePlayer(player);
                 this.onPlayerUpdate();
             });
             this.socket.on('welcome', username => {
-                this.username = username;
-                this.onPlayerUpdate();
+                this.players.setMyUsername(username);
                 this.onWelcome();
+                this.onPlayerUpdate();
                 console.log('welcome');
-                this.tileView.viewCenter = this.players[username].position;
+                this.tileView.viewCenter = this.players.me().position;
             });
             this.socket.on('error', error => {
                 console.log(error);
@@ -74,6 +73,7 @@ export class MineSocket {
     }
 
     sendLoginMessage(username, password) {
+        this.players.setMyUsername(username);
         this.socket.emit('login', username, password);
     }
 
