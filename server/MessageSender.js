@@ -123,13 +123,19 @@ export class MessageSender {
         player.connect(socket);
 
         socket.on('click', coords => {
-            this.world.reveal(player, coords);
+            if (player.isAlive()) {
+                this.world.reveal(player, coords);
+            }
         });
         socket.on('flag', coords => {
-            this.world.flag(player, coords);
+            if (player.isAlive()) {
+                this.world.flag(player, coords);
+            }
         });
         socket.on('doubleClick', coords => {
-            this.world.doubleClick(player, coords);
+            if (player.isAlive()) {
+                this.world.doubleClick(player, coords);
+            }
         });
         socket.on('move', coords => {
             this.world.move(player, coords);

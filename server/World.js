@@ -19,6 +19,7 @@ export class World {
     parseEventQueue() {
         let e;
         while (e = event.read()) {
+            const player = e.player? this.players[e.player] : null;
             switch (e.type) {
                 case 'register':
                     this.addPlayer(e.username, e.hashedPassword);
@@ -30,16 +31,20 @@ export class World {
                         const {coords, mines} = event.read();
                         this.insertChunk(coords, mines);
                     }
-                    this.reveal(this.players[e.player], e.coords);
+                    this.reveal(player, e.coords);
                     break;
                 case 'flag':
-                    this.flag(this.players[e.player], e.coords);
+                    this.flag(player, e.coords);
                     break;
                 case 'move':
-                    this.move(this.players[e.player], e.coords);
+                    this.move(player, e.coords);
                     break;
                 case 'new chunk':
                     this.insertChunk(e.coords, e.mines);
+                    break;
+                case 'death':
+                    player.kill(0);
+                    player.deadUntil = e.deadUntil;
                     break;
             }
         }
@@ -91,9 +96,6 @@ export class World {
      * @param worldCoords {number[]}
      */
     reveal(player, worldCoords) {
-        if (!player.isAlive()) {
-            return;
-        }
         const coords = vectorFloor(worldCoords);
 
         event.log({
@@ -158,9 +160,6 @@ export class World {
      * @param worldCoords {number[]}
      */
     flag(player, worldCoords) {
-        if (!player.isAlive()) {
-            return;
-        }
         const coords = vectorFloor(worldCoords);
 
         let chunk = this.chunks.getChunk(coords);
@@ -182,9 +181,6 @@ export class World {
      * @param worldCoords {number[]}
      */
     doubleClick(player, worldCoords) {
-        if (!player.isAlive()) {
-            return;
-        }
         const coords = vectorFloor(worldCoords);
         console.log(`double click ${coords}`)
         const tile = this.chunks.getTile(coords);
@@ -230,6 +226,15 @@ export class World {
             type: 'move',
             player: player.username,
             coords: worldCoords
+        });
+    }
+
+    killPlayer(player, deathDuration) {
+        player.kill(deathDuration);
+        event.log({
+            type: 'death',
+            player: player.username,
+            deadUntil: player.deadUntil
         });
     }
 

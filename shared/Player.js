@@ -16,6 +16,7 @@ export class Player {
         }
 
         this.deadUntil = 0;
+        this.deaths = 0;
     }
 
     publicVersion() {
@@ -23,7 +24,8 @@ export class Player {
             username: this.username,
             position: this.position,
             score: this.score,
-            deadUntil: this.deadUntil
+            deadUntil: this.deadUntil,
+            deaths: this.deaths,
         };
     }
 
@@ -39,11 +41,20 @@ export class Player {
         this.position = newPosition;
     }
 
-    hasRevealed(tile) {
+    /**
+     * Kill this player
+     * @param deathDuration {number} time until respawn in milliseconds
+     */
+    kill(deathDuration) {
+        this.deadUntil = Date.now() + deathDuration;
+        this.deaths++;
+    }
+
+    hasRevealed(tile, world) {
         const info = tileInfo(tile);
 
         if (info.mine) {
-            // todo: kill player
+            world.killPlayer(this, 5000 * this.deaths);
         }
         else {
             this.score[info.adjacent] += 1;
@@ -52,6 +63,13 @@ export class Player {
 
     isAlive() {
         return Date.now() > this.deadUntil;
+    }
+
+    timeUntilRespawn() {
+        if (this.isAlive()) {
+            return 0;
+        }
+        return this.deadUntil - Date.now();
     }
 
     points() {

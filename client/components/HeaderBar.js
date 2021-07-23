@@ -20,7 +20,6 @@ const HeaderBar = ({mineSocket}) => {
         setScore(me.points());
     }
 
-    console.log('peepee')
     return <div style={headerStyle}>
         <button onClick={() => mineSocket.logOut()}>Log Out</button>
         <span>{username} - {score}</span>

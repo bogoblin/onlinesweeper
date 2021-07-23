@@ -125,7 +125,7 @@ export class Chunk {
         if (revealed(tile)) return;
 
         const numberOfAdjacentMines = adjacent(tile);
-        player.hasRevealed(tile);
+        player.hasRevealed(tile, world);
         this.tiles[index] += Revealed;
 
         // Reveal adjacent tiles if none of them are mines
