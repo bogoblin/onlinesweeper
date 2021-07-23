@@ -1,4 +1,5 @@
 import path from 'path';
+import * as webpack from 'webpack';
 import HtmlWebpackPlugin from 'html-webpack-plugin';
 
 const contentBase = path.resolve(path.resolve(), 'client_dist');
@@ -16,6 +17,7 @@ export default {
         new HtmlWebpackPlugin({
             title: 'Online Minesweeper'
         }),
+        // new webpack.NamedModulesPlugin(),
         // new webpack.HotModuleReplacementPlugin(),
     ],
     devServer: {
