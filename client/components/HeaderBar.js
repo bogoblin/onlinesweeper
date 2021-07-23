@@ -7,7 +7,7 @@ const headerStyle = {
     display: 'flex',
     width: '100%',
     backgroundColor: 'grey',
-    "user-select": 'none'
+    userSelect: 'none'
 };
 
 const HeaderBar = ({mineSocket}) => {
