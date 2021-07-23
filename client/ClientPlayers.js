@@ -50,7 +50,7 @@ export class ClientPlayers {
         // if you are dead, make the screen red and show the respawn time
         if (this.me() && !this.me().isAlive()) {
             const secondsUntilRespawn = this.me().timeUntilRespawn() / 1000;
-            const deathTextHeight = height * 0.4;
+            const deathTextHeight = Math.max(width * 0.1, 200);
             context.font = `${deathTextHeight}px monospace`;
             context.fillStyle = 'black';
             context.textBaseline = 'middle';
