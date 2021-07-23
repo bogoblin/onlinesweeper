@@ -124,7 +124,7 @@ class TileView {
             this
         );
 
-        this.players.draw(this.context);
+        this.players.draw(this);
 
         requestAnimationFrame(() => {
             this.draw();

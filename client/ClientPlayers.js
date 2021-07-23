@@ -1,5 +1,8 @@
 import {Player} from "../shared/Player.js";
 import {PlayerInfo} from "./canvasUI/PlayerInfo.js";
+import {vectorAdd} from "../shared/Vector2.js";
+
+const TWO_PI = 2*Math.PI;
 
 export class ClientPlayers {
     constructor() {
@@ -39,13 +42,30 @@ export class ClientPlayers {
         this.myUsername = username;
     }
 
+
     /**
      *
-     * @param context {CanvasRenderingContext2D}
+     * @param tileView {TileView}
      */
-    draw(context) {
+    draw(tileView) {
+        const context = tileView.context;
         const {width, height} = context.canvas;
-        // todo: draw cursors, etc
+
+        // draw cursors
+        for (let player of Object.values(this.players)) {
+            if (!player.lastClick) {
+                continue;
+            }
+            const [x, y] = tileView.worldToScreen(vectorAdd(player.lastClick, [0.5, 0.5]));
+
+            // todo: make it a cursor
+            context.fillStyle = 'blue';
+            context.beginPath()
+            context.arc(x, y, 4, 0, TWO_PI);
+            context.fill();
+            context.font = `20px monospace`;
+            context.fillText(player.username, x+5, y-10);
+        }
 
         // if you are dead, make the screen red and show the respawn time
         if (this.me() && !this.me().isAlive()) {

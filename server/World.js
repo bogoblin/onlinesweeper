@@ -104,6 +104,8 @@ export class World {
             coords: coords
         });
 
+        player.lastClick = coords;
+
         this.queueReveal(player, coords);
         this.handleRevealQueue();
     }
@@ -170,8 +172,10 @@ export class World {
                 player: player.username,
                 coords: coords
             });
+            player.lastClick = coords;
             if (this.messageSender) {
                 this.messageSender.chunk(chunk);
+                this.messageSender.player(player);
             }
         }
     }
@@ -213,7 +217,8 @@ export class World {
             }
         }
 
-        this.handleRevealQueue();
+        player.lastClick = coords;
+        this.messageSender.player(player);
     }
 
     /**

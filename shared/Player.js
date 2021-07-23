@@ -10,6 +10,7 @@ export class Player {
         this.username = username;
         this.hashedPassword = hashedPassword;
         this.position = [0,0];
+        this.lastClick = null;
         this.score = [];
         for (let i=0; i<=8; i++) {
             this.score.push(0);
@@ -23,6 +24,7 @@ export class Player {
         return {
             username: this.username,
             position: this.position,
+            lastClick: this.lastClick,
             score: this.score,
             deadUntil: this.deadUntil,
             deaths: this.deaths,
