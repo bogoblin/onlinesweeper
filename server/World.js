@@ -43,7 +43,7 @@ export class World {
                     this.insertChunk(e.coords, e.mines);
                     break;
                 case 'death':
-                    player.kill(0);
+                    this.killPlayer(player, 0);
                     player.deadUntil = e.deadUntil;
                     break;
             }

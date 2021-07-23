@@ -16,6 +16,9 @@ const HeaderBar = ({mineSocket}) => {
 
     mineSocket.onPlayerUpdate = () => {
         const me = mineSocket.players.me();
+        if (!me) {
+            return;
+        }
         setUsername(me.username);
         setScore(me.points());
     }

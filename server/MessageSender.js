@@ -141,6 +141,12 @@ export class MessageSender {
             this.world.move(player, coords);
         });
 
+        socket.on('logout', () => {
+            const session = socket.request.session;
+            console.log(player.username + 'logged out');
+            session.username = null;
+            session.save();
+        })
         socket.on('disconnect', () => {
             player.socket = null;
         });

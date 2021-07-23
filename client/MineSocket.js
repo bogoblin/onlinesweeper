@@ -85,6 +85,7 @@ export class MineSocket {
     }
 
     logOut() {
+        this.socket.emit('logout');
         this.socket.disconnect();
         if (this.onLogout) {
             this.onLogout();

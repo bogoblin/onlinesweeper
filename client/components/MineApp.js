@@ -29,8 +29,9 @@ export const App = ({mineSocket}) => {
     }
 
     const handleSubmit = () => {
+        console.log('handleSubmit')
         setState(AppStates.Loading);
-        mineSocket.socket.emit('login', username, password);
+        mineSocket.sendLoginMessage(username, password);
     }
 
     switch (state) {
