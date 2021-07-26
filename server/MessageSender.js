@@ -60,11 +60,32 @@ export class MessageSender {
 
         // send all player info
         for (let player of this.world.getPlayers()) {
-            this.player(player, playerToWelcome);
+            if (player.socket) {
+                this.player(player, playerToWelcome);
+
+                // send this player to all other players
+                this.player(playerToWelcome, player);
+            }
         }
 
         // send welcome event
         playerToWelcome.socket.emit('welcome', playerToWelcome.username);
+    }
+
+    /**
+     *
+     * @param playerJoining {Player}
+     */
+    join(playerJoining) {
+        this.io.emit('join', playerJoining.username)
+    }
+
+    /**
+     *
+     * @param playerLeaving {Player}
+     */
+    leave(playerLeaving) {
+        this.io.emit('leave', playerLeaving.username);
     }
 
     initializeSocket = socket => {
@@ -122,6 +143,8 @@ export class MessageSender {
     initializePlayer = (player, socket) => {
         player.connect(socket);
 
+        this.join(player);
+
         socket.on('click', coords => {
             if (player.isAlive()) {
                 this.world.reveal(player, coords);
@@ -149,6 +172,7 @@ export class MessageSender {
         })
         socket.on('disconnect', () => {
             player.socket = null;
+            this.leave(player);
         });
 
         console.log('sending welcome')

@@ -42,6 +42,9 @@ export class MineSocket {
                 this.players.updatePlayer(player);
                 this.onPlayerUpdate();
             });
+            this.socket.on('leave', username => {
+                this.players.removePlayer(username);
+            })
             this.socket.on('welcome', username => {
                 this.players.setMyUsername(username);
                 this.onWelcome();

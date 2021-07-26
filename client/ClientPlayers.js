@@ -97,4 +97,8 @@ export class ClientPlayers {
             context.fillRect(0, 0, width, height);
         }
     }
+
+    removePlayer(username) {
+        delete this.players[username];
+    }
 }
