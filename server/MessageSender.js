@@ -185,7 +185,7 @@ const hashPassword = password => sha256.hash(salt+password);
 
 const validUsername = username => {
     const [minL, maxL] = [3, 30];
-    if (username.length <= minL || username.length >= maxL) {
+    if (username.length < minL || username.length > maxL) {
         return [false, `Username must be between ${minL} and ${maxL} characters in length.`];
     }
     return [true, ''];
@@ -193,7 +193,7 @@ const validUsername = username => {
 
 const validPassword = password => {
     const [minL, maxL] = [6, 30];
-    if (password.length <= minL || password.length >= maxL) {
+    if (password.length < minL || password.length > maxL) {
         return [false, `Password must be between ${minL} and ${maxL} characters in length.`];
     }
     return [true, ''];
