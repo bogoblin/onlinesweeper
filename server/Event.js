@@ -7,6 +7,11 @@ const logDir = './logs';
 
 class EventSource {
     constructor() {
+        try {
+            fs.mkdirSync(logDir);
+        } catch {
+            // log directory already exists
+        }
         const logFiles = fs.readdirSync(logDir).sort((a, b) => b.localeCompare(a));
         if (logFiles.length > 0) {
             const latestLogFile = logDir + '/' + logFiles[0];
