@@ -20,7 +20,6 @@ class TileView {
         });
 
         this.drag = {
-            dragging: false,
             dragStartScreen: [0,0],
             viewCenterOnDragStart: [0,0]
         }
@@ -35,10 +34,12 @@ class TileView {
         }
         this.canvas = newCanvas;
         this.context = this.canvas.getContext('2d');
-        this.canvas.addEventListener('mousedown', this.clicked.bind(this));
+        this.canvas.addEventListener('mousedown', this.mouseDown.bind(this));
         this.canvas.addEventListener('mouseup', this.mouseUp.bind(this));
         this.canvas.addEventListener('mousemove', this.mouseMove.bind(this));
         this.canvas.oncontextmenu = () => false; // disable right click
+
+        this.buttonsDown = [false,false,false]; // left, middle, right
 
         this.updateCanvasSize();
         this.draw();
@@ -60,12 +61,22 @@ class TileView {
      *
      * @param event {MouseEvent}
      */
-    clicked(event) {
+    mouseDown(event) {
+        const button = event.button;
+        this.buttonsDown[button] = true;
         const screenCoords = this.getScreenCoords(event);
 
-        this.drag.dragging = true;
-        this.drag.dragStartScreen = screenCoords;
-        this.drag.viewCenterOnDragStart = this.viewCenter;
+        switch (button) {
+            case 0:
+            case 1:
+                this.drag.dragStartScreen = screenCoords;
+                this.drag.viewCenterOnDragStart = this.viewCenter;
+                break;
+            case 2:
+                const worldCoords = this.screenToWorld(screenCoords);
+                this.tileMap.rightClick(worldCoords);
+                break;
+        }
     }
 
     /**
@@ -73,29 +84,32 @@ class TileView {
      * @param event {MouseEvent}
      */
     mouseUp(event) {
-        if (this.drag.dragging) {
-            this.drag.dragging = false;
+        const button = event.button;
+        this.buttonsDown[button] = false;
 
-            const screenCoords = this.getScreenCoords(event);
+        const screenCoords = this.getScreenCoords(event);
+
+        if (button === 0 || button === 1) {
             const dragVector = vectorSub(this.drag.dragStartScreen, screenCoords);
-            if (vectorMagnitudeSquared(dragVector) < 1) {
-                // Dragging hasn't happened, so we send a click to the tile map
-                const worldCoords = this.screenToWorld(screenCoords);
-                switch (event.button) {
-                    case 0: // left click
-                        this.tileMap.click(worldCoords);
-                        break;
-                    case 2: // right click
-                        this.tileMap.rightClick(worldCoords);
-                        break;
-                    default:
-                }
-            }
-            else {
+            if (vectorMagnitudeSquared(dragVector) >= 3) {
                 if (this.socket) {
                     this.socket.sendMoveMessage(this.viewCenter);
                 }
+                return;
             }
+        }
+
+        const worldCoords = this.screenToWorld(screenCoords);
+        switch (button) {
+            case 0: // left click
+                if (this.buttonsDown[2]) {
+                    this.tileMap.doubleClick(worldCoords);
+                }
+                else {
+                    this.tileMap.click(worldCoords);
+                }
+                break;
+            default:
         }
     }
 
@@ -104,7 +118,7 @@ class TileView {
      * @param event {MouseEvent}
      */
     mouseMove(event) {
-        if (this.drag.dragging) {
+        if (this.buttonsDown[0] || this.buttonsDown[1]) {
             const screenCoords = this.getScreenCoords(event);
             const dragVector = vectorSub(this.drag.dragStartScreen, screenCoords);
             const dragVectorInWorldSpace = vectorTimesScalar(dragVector, 1/this.tileSize);

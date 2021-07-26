@@ -50,7 +50,7 @@ class TileMap {
         const now = performance.now();
         if (this.socket) {
             if (now - this.lastClicked < this.doubleClickTime) {
-                this.socket.sendDoubleClickMessage(worldCoords);
+                this.doubleClick(worldCoords);
             }
             else {
                 this.socket.sendClickMessage(worldCoords);
@@ -63,6 +63,10 @@ class TileMap {
         if (this.socket) {
             this.socket.sendFlagMessage(worldCoords);
         }
+    }
+
+    doubleClick(worldCoords) {
+        this.socket.sendDoubleClickMessage(worldCoords);
     }
 
     /**
