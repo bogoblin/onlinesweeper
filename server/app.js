@@ -8,12 +8,7 @@ import session from "express-session";
 const app = express();
 const httpServer = createServer(app);
 
-const io = new Server(httpServer, {
-    cors: {
-        origin: "http://localhost:8080",
-        methods: ['GET', 'POST']
-    }
-});
+const io = new Server(httpServer);
 
 // Set up express-session: this saves a cookie so the user doesn't have to type their username and password each time
 const sessionMiddleware = session({
