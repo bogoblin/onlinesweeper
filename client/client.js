@@ -6,7 +6,8 @@ import './style.css';
 
 const root = document.createElement('div');
 
-const mineSocket = new MineSocket(`ws://${location.hostname}:8080`);
+const socketUrl = location.href.replace('http', 'ws');
+const mineSocket = new MineSocket(socketUrl);
 
 document.body.append(root);
 ReactDOM.render(<App mineSocket={mineSocket}/>, root);
