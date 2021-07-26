@@ -1,6 +1,7 @@
 import * as sha256 from 'sha-256';
 import {Server} from 'socket.io';
 import {Chunk} from "../shared/Chunk.js";
+import {vectorFloor} from "../shared/Vector2.js";
 
 const salt = process.env['salt'];
 
@@ -147,21 +148,21 @@ export class MessageSender {
 
         socket.on('click', coords => {
             if (player.isAlive()) {
-                this.world.reveal(player, coords);
+                this.world.reveal(player, validCoords(coords));
             }
         });
         socket.on('flag', coords => {
             if (player.isAlive()) {
-                this.world.flag(player, coords);
+                this.world.flag(player, validCoords(coords));
             }
         });
         socket.on('doubleClick', coords => {
             if (player.isAlive()) {
-                this.world.doubleClick(player, coords);
+                this.world.doubleClick(player, validCoords(coords));
             }
         });
         socket.on('move', coords => {
-            this.world.move(player, coords);
+            this.world.move(player, validCoords(coords));
         });
 
         socket.on('logout', () => {
@@ -196,4 +197,19 @@ const validPassword = password => {
         return [false, `Password must be between ${minL} and ${maxL} characters in length.`];
     }
     return [true, ''];
+}
+
+const validCoords = coords => {
+    if (typeof coords !== typeof [1,2]) {
+        return [0,0];
+    }
+    if (coords.length !== 2) {
+        return [0,0];
+    }
+    try {
+        return vectorFloor(coords);
+    }
+    catch {
+        return [0,0];
+    }
 }
