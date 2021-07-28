@@ -148,7 +148,7 @@ class EventStore extends Store {
             callback(null, session);
         } else {
             console.log(this.sessions);
-            callback('Session not found', null);
+            callback();
         }
     }
 
