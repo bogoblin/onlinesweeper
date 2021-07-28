@@ -49,7 +49,6 @@ export class MineSocket {
                 this.players.setMyUsername(username);
                 this.onWelcome();
                 this.onPlayerUpdate();
-                console.log('welcome');
                 this.tileView.viewCenter = this.players.me().position;
             });
             this.socket.on('error', error => {

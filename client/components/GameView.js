@@ -1,16 +1,9 @@
 import * as React from "react";
-import PlayerDisplay from "./PlayerDisplay.js";
-import HeaderBar from "./HeaderBar.js";
+import UI from "./UI.js";
 
 const canvasStyle = {
     margin: '0',
     padding: '0'
-}
-
-const panelStyle = {
-    position: 'absolute',
-    left: '5px',
-    top: '5px',
 }
 
 const GameView = ({mineSocket}) => {
@@ -18,12 +11,11 @@ const GameView = ({mineSocket}) => {
 
     React.useEffect(() => {
         mineSocket.tileView.setCanvas(gameCanvas.current);
-    })
-
+    });
 
     return <div>
         <canvas ref={gameCanvas} style={canvasStyle}/>
-        <HeaderBar mineSocket={mineSocket}/>
+        <UI mineSocket={mineSocket}/>
     </div>
 }
 

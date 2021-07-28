@@ -10,22 +10,13 @@ const headerStyle = {
     userSelect: 'none'
 };
 
-const HeaderBar = ({mineSocket}) => {
-    const [username, setUsername] = React.useState('');
-    const [score, setScore] = React.useState(0);
-
-    mineSocket.onPlayerUpdate = () => {
-        const me = mineSocket.players.me();
-        if (!me) {
-            return;
-        }
-        setUsername(me.username);
-        setScore(me.points());
+const HeaderBar = ({me, mineSocket}) => {
+    if (!me) {
+        return <div></div>;
     }
-
     return <div style={headerStyle}>
         <button onClick={() => mineSocket.logOut()}>Log Out</button>
-        <span>{username} - {score}</span>
+        <span>{me.username} - {me.points()}</span>
     </div>
 }
 

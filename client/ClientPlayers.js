@@ -20,7 +20,9 @@ export class ClientPlayers {
             newPlayer.playerInfo = new PlayerInfo(newPlayer);
             this.players[username] = newPlayer;
         }
-        this.players[username] = Object.assign(this.players[username], player);
+        const existingPlayer = this.players[username];
+        Object.assign(existingPlayer, player);
+        this.players[username] = existingPlayer;
     }
 
     /**
@@ -44,6 +46,7 @@ export class ClientPlayers {
 
     setMyUsername(username) {
         this.myUsername = username;
+        console.log(`set username to ${username}`)
     }
 
 
@@ -100,5 +103,13 @@ export class ClientPlayers {
 
     removePlayer(username) {
         delete this.players[username];
+    }
+
+    playersSortedByScore(numberOfPlayers) {
+        const sorted = Object.values(this.players).sort((a, b) => b.points() - a.points());
+        if (sorted.length > numberOfPlayers) {
+            return sorted.slice(0, numberOfPlayers);
+        }
+        return sorted;
     }
 }
