@@ -2,6 +2,7 @@ import * as fs from 'fs';
 import {EOL} from 'os';
 import dateformat from 'dateformat';
 import ReadLines from 'n-readlines';
+import {Store} from 'express-session';
 
 const logDir = './logs';
 
@@ -125,3 +126,40 @@ class EventWriter {
 }
 
 export const event = new EventSource();
+
+class EventStore extends Store {
+    constructor() {
+        super();
+        this.sessions = {};
+    }
+
+    destroy(sid, callback) {
+        delete this.sessions[sid];
+        event.log({
+            type: 'delete-session',
+            sid
+        });
+        callback(null);
+    }
+
+    get(sid, callback) {
+        const session = this.sessions[sid];
+        if (session) {
+            callback(null, session);
+        } else {
+            console.log(this.sessions);
+            callback('Session not found', null);
+        }
+    }
+
+    set(sid, session, callback) {
+        this.sessions[sid] = session;
+        event.log({
+            type: 'session',
+            sid, session
+        });
+        callback(null);
+    }
+}
+
+export const store = new EventStore();

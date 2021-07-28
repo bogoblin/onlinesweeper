@@ -2,6 +2,7 @@ import {MessageSender} from "./MessageSender.js";
 import {createServer} from 'http';
 import {Server} from 'socket.io';
 import {World} from "./World.js";
+import {store} from "./Event.js";
 import express from "express";
 import session from "express-session";
 
@@ -12,6 +13,7 @@ const io = new Server(httpServer);
 
 // Set up express-session: this saves a cookie so the user doesn't have to type their username and password each time
 const sessionMiddleware = session({
+    store: store,
     secret: 'minesweeper computer',
     cookie: {
         maxAge: 600000

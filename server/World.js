@@ -4,7 +4,7 @@ import {forEachInRect, forEachNeighbour, vectorFloor} from "../shared/Vector2.js
 import {adjacent, mine, revealed, tileInfo} from "../shared/Tile.js";
 import {Player} from "../shared/Player.js";
 import {minesForChunk} from "./ChunkGenerator.js";
-import {event} from './Event.js';
+import {event, store} from './Event.js';
 
 export class World {
     constructor() {
@@ -45,6 +45,13 @@ export class World {
                 case 'death':
                     this.killPlayer(player, 0);
                     player.deadUntil = e.deadUntil;
+                    break;
+                case 'session':
+                    const {sid, session} = e;
+                    store.set(sid, session, () => {});
+                    break;
+                case 'delete-session':
+                    store.destroy(e.sid, () => {});
                     break;
             }
         }
